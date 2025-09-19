@@ -4,22 +4,12 @@ import (
 	"context"
 	"io"
 	"strings"
-	"time"
 
-	"github.com/nepriyatelev/outline-client-go/outline"
+	"github.com/nepriyatelev/outline-client-go/internal/contracts"
 	"github.com/valyala/fasthttp"
 )
 
-const (
-	defaultUserAgentName       = "outline-go-client/1.0" // User-Agent header
-	defaultMaxConnsPerHost     = 256                     // 256 connections
-	defaultMaxIdleConnDuration = 30 * time.Second        // 30 seconds
-	defaultReadTimeout         = 5 * time.Second         // 5 seconds
-	defaultWriteTimeout        = 5 * time.Second         // 5 seconds
-	defaultMaxConnDuration     = 1 * time.Minute         // 1 minute
-	defaultReadBufferSize      = 4096                    // 4KB
-	defaultWriteBufferSize     = 4096                    // 4KB
-)
+const defaultUserAgentName = "outline-go-client/1.0" // User-Agent header
 
 type Client struct {
 	client *fasthttp.Client
@@ -27,14 +17,7 @@ type Client struct {
 
 func NewClient() *Client {
 	fc := &fasthttp.Client{
-		Name:                defaultUserAgentName,
-		MaxConnsPerHost:     defaultMaxConnsPerHost,
-		MaxIdleConnDuration: defaultMaxIdleConnDuration,
-		ReadTimeout:         defaultReadTimeout,
-		WriteTimeout:        defaultWriteTimeout,
-		MaxConnDuration:     defaultMaxConnDuration,
-		ReadBufferSize:      defaultReadBufferSize,
-		WriteBufferSize:     defaultWriteBufferSize,
+		Name: defaultUserAgentName,
 	}
 
 	return &Client{
@@ -42,7 +25,7 @@ func NewClient() *Client {
 	}
 }
 
-func (c *Client) Do(ctx context.Context, req *outline.Request) (*outline.Response, error) {
+func (c *Client) Do(ctx context.Context, req *contracts.Request) (*contracts.Response, error) {
 
 	fastReq := fasthttp.AcquireRequest()
 	fastResp := fasthttp.AcquireResponse()
@@ -93,7 +76,7 @@ func (c *Client) Do(ctx context.Context, req *outline.Request) (*outline.Respons
 	})
 
 	bodyBytes := fastResp.Body()
-	resp := &outline.Response{
+	resp := &contracts.Response{
 		StatusCode: fastResp.StatusCode(),
 		Headers:    headers,
 		Body:       io.NopCloser(strings.NewReader(string(bodyBytes))),
