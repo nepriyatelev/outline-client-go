@@ -22,3 +22,10 @@ type Response struct {
 type Doer interface {
 	Do(ctx context.Context, req *Request) (*Response, error)
 }
+
+type Logger interface {
+	// Debugf логирует отладочные сообщения с форматированием.
+	Debugf(ctx context.Context, format string, args ...any)
+	// Infof логирует информационные сообщения с форматированием.
+	Infof(ctx context.Context, format string, args ...any)
+}
