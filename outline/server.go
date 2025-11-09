@@ -182,12 +182,7 @@ func (c *Client) GetMetricsEnabled(ctx context.Context) (*types.MetricsEnabled, 
 		return nil, err
 	}
 
-	metricsEnabled, err := unmarshalJSONWithError[types.MetricsEnabled](resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return metricsEnabled, nil
+	return unmarshalJSONWithError[types.MetricsEnabled](resp.Body)
 }
 
 // Enables or disables sharing of metrics.
@@ -219,6 +214,66 @@ func (c *Client) UpdateMetricsEnabled(ctx context.Context, enabled bool) error {
 			Code:    http.StatusBadRequest,
 			Message: fmt.Sprintf("Invalid request: %s.", string(reqBodyBytes)),
 		}
+	default:
+		return errUnexpected(resp.StatusCode, resp.Body)
+	}
+}
+
+// === Data Limits (Server-wide) ===
+
+func (c *Client) UpdateKeyLimitBytes(ctx context.Context, bytes uint64) error {
+	var reqBody struct {
+		Limit types.Limit `json:"limit"`
+	}
+	reqBody.Limit.Bytes = bytes
+
+	reqBodyBytes, _ := json.Marshal(reqBody)
+
+	req := &contracts.Request{
+		Method:  http.MethodPut,
+		URL:     c.putServerAccessKeyDataLimitPath.String(),
+		Headers: DefaultHeaders(),
+		Body:    reqBodyBytes,
+	}
+
+	c.logRequest(ctx, "UpdateKeyLimitBytes", req)
+
+	resp, err := c.doer.Do(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	switch resp.StatusCode {
+	case http.StatusNoContent:
+		return nil
+	case http.StatusBadRequest:
+		return &ClientError{
+			Code:    http.StatusBadRequest,
+			Message: fmt.Sprintf("Invalid data limit: %d.", bytes),
+		}
+	default:
+		return errUnexpected(resp.StatusCode, resp.Body)
+	}
+}
+
+func (c *Client) DeleteKeyLimitBytes(ctx context.Context) error {
+	req := &contracts.Request{
+		Method:  http.MethodDelete,
+		URL:     c.deleteServerAccessKeyDataLimitPath.String(),
+		Headers: DefaultHeaders(),
+		Body:    nil,
+	}
+
+	c.logRequest(ctx, "DeleteKeyLimitBytes", req)
+
+	resp, err := c.doer.Do(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	switch resp.StatusCode {
+	case http.StatusNoContent:
+		return nil
 	default:
 		return errUnexpected(resp.StatusCode, resp.Body)
 	}
