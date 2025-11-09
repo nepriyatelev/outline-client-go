@@ -2,8 +2,6 @@ package http
 
 import (
 	"context"
-	"io"
-	"strings"
 
 	"github.com/nepriyatelev/outline-client-go/internal/contracts"
 	"github.com/valyala/fasthttp"
@@ -26,7 +24,6 @@ func NewClient() *Client {
 }
 
 func (c *Client) Do(ctx context.Context, req *contracts.Request) (*contracts.Response, error) {
-
 	fastReq := fasthttp.AcquireRequest()
 	fastResp := fasthttp.AcquireResponse()
 	defer fasthttp.ReleaseRequest(fastReq)
@@ -43,11 +40,7 @@ func (c *Client) Do(ctx context.Context, req *contracts.Request) (*contracts.Res
 
 	// Устанавливаем тело запроса, если оно есть
 	if req.Body != nil {
-		body, err := io.ReadAll(req.Body)
-		if err != nil {
-			return nil, err
-		}
-		fastReq.SetBody(body)
+		fastReq.SetBody(req.Body)
 	}
 
 	// Запускаем фактический HTTP-запрос в отдельной горутине
@@ -79,7 +72,7 @@ func (c *Client) Do(ctx context.Context, req *contracts.Request) (*contracts.Res
 	resp := &contracts.Response{
 		StatusCode: fastResp.StatusCode(),
 		Headers:    headers,
-		Body:       io.NopCloser(strings.NewReader(string(bodyBytes))),
+		Body:       bodyBytes,
 	}
 	return resp, nil
 }
