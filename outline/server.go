@@ -10,6 +10,8 @@ import (
 	"github.com/nepriyatelev/outline-client-go/outline/types"
 )
 
+// === Get Server Information ===
+
 // GetServerInfo Returns information about the server.
 func (c *Client) GetServerInfo(ctx context.Context) (*types.ServerInfoResponse, error) {
 	req := &contracts.Request{
@@ -34,14 +36,16 @@ func (c *Client) GetServerInfo(ctx context.Context) (*types.ServerInfoResponse, 
 	return serverInfo, nil
 }
 
-// PutServerHostname Changes the hostname for access keys. Must be a valid hostname or IP address.
+// === Server Configuration ===
+
+// UpdateServerHostname Changes the hostname for access keys. Must be a valid hostname or IP address.
 // If it's a hostname, DNS must be set up independently of this API.
-func (c *Client) PutServerHostname(ctx context.Context, hostname string) error {
+func (c *Client) UpdateServerHostname(ctx context.Context, hostnameOrIP string) error {
 	var reqBody struct {
 		Hostname string `json:"hostname"`
 	}
 
-	reqBody.Hostname = hostname
+	reqBody.Hostname = hostnameOrIP
 	reqBodyBytes, _ := json.Marshal(&reqBody)
 
 	req := &contracts.Request{
@@ -51,46 +55,83 @@ func (c *Client) PutServerHostname(ctx context.Context, hostname string) error {
 		Body:    reqBodyBytes,
 	}
 
-	c.logRequest(ctx, "SetHostname", req)
+	c.logRequest(ctx, "UpdateServerHostname", req)
 
 	resp, err := c.doer.Do(ctx, req)
 	if err != nil {
 		return err
 	}
 
-	var (
-		errInvalidHostnameOrIP = func(hostOrIP string) *ClientError {
-			return &ClientError{
-				Code: 400,
-				Message: fmt.Sprintf("An invalid hostname or IP address was provided: %s.",
-					hostOrIP),
-			}
-		}
-		errInternal = func(hostOrIP string) *ClientError {
-			return &ClientError{
-				Code: 500,
-				Message: fmt.Sprintf("An internal error occurred for host or IP: %s. "+
-					"This could be thrown if there were network errors "+
-					"while validating the hostname.",
-					hostOrIP),
-			}
-		}
-	)
-
 	switch resp.StatusCode {
 	case http.StatusCreated:
 		return nil
 	case http.StatusBadRequest:
-		return errInvalidHostnameOrIP(hostname)
+		return &ClientError{
+			Code: http.StatusBadRequest,
+			Message: fmt.Sprintf("An invalid hostname or IP address was provided: %s.",
+				hostnameOrIP),
+		}
 	case http.StatusInternalServerError:
-		return errInternal(hostname)
+		return &ClientError{
+			Code: http.StatusInternalServerError,
+			Message: fmt.Sprintf("An internal error occurred for host or IP: %s. "+
+				"This could be thrown if there were network errors "+
+				"while validating the hostname.",
+				hostnameOrIP),
+		}
 	default:
 		return errUnexpected(resp.StatusCode, resp.Body)
 	}
 }
 
-// PutServerName Renames the server.
-func (c *Client) PutServerName(ctx context.Context, name string) error {
+// UpdatePortNewAccessKeys Changes the default port for newly created access keys.
+// This can be a port already used for access keys.
+func (c *Client) UpdatePortNewAccessKeys(ctx context.Context, port uint16) error {
+	var reqBody struct {
+		Port uint16 `json:"port"`
+	}
+
+	reqBody.Port = port
+	reqBodyBytes, _ := json.Marshal(&reqBody)
+
+	req := &contracts.Request{
+		Method:  http.MethodPut,
+		URL:     c.putServerPortPath.String(),
+		Headers: DefaultHeaders(),
+		Body:    reqBodyBytes,
+	}
+
+	c.logRequest(ctx, "UpdatePortNewAccessKeys", req)
+
+	resp, err := c.doer.Do(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	switch resp.StatusCode {
+	case http.StatusNoContent:
+		return nil
+	case http.StatusBadRequest:
+		return &ClientError{
+			Code: http.StatusBadRequest,
+			Message: fmt.Sprintf(
+				"The requested port wasn't an integer from 1 through 65535, "+
+					"or the request had no port parameter. Provided: %d.", port),
+		}
+	case http.StatusConflict:
+		return &ClientError{
+			Code: http.StatusConflict,
+			Message: fmt.Sprintf(
+				"The requested port was already in use by another service: %d.",
+				port),
+		}
+	default:
+		return errUnexpected(resp.StatusCode, resp.Body)
+	}
+}
+
+// UpdateServerName Renames the server.
+func (c *Client) UpdateServerName(ctx context.Context, name string) error {
 	var reqBody struct {
 		Name string `json:"name"`
 	}
@@ -112,25 +153,21 @@ func (c *Client) PutServerName(ctx context.Context, name string) error {
 		return err
 	}
 
-	errInvalidServerName := func(name string) *ClientError {
-		return &ClientError{
-			Code:    400,
-			Message: fmt.Sprintf("An invalid server name was provided: %s.", name),
-		}
-	}
-
 	switch resp.StatusCode {
 	case http.StatusNoContent:
 		return nil
 	case http.StatusBadRequest:
-		return errInvalidServerName(name)
+		return &ClientError{
+			Code:    http.StatusBadRequest,
+			Message: fmt.Sprintf("An invalid server name was provided: %s.", name),
+		}
 	default:
 		return errUnexpected(resp.StatusCode, resp.Body)
 	}
 }
 
 // GetMetricsEnabled Returns whether metrics is being shared.
-func (c *Client) GetMetricsEnabled(ctx context.Context) (bool, error) {
+func (c *Client) GetMetricsEnabled(ctx context.Context) (*types.MetricsEnabled, error) {
 	req := &contracts.Request{
 		Method:  http.MethodGet,
 		URL:     c.getMetricsEnabledPath.String(),
@@ -142,24 +179,20 @@ func (c *Client) GetMetricsEnabled(ctx context.Context) (bool, error) {
 
 	resp, err := c.doer.Do(ctx, req)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
-	var metricsResp struct {
-		Enabled bool `json:"enabled"`
-	}
-	if err = json.Unmarshal(resp.Body, &metricsResp); err != nil {
-		return false, err
+	metricsEnabled, err := unmarshalJSONWithError[types.MetricsEnabled](resp.Body)
+	if err != nil {
+		return nil, err
 	}
 
-	return metricsResp.Enabled, nil
+	return metricsEnabled, nil
 }
 
 // Enables or disables sharing of metrics.
-func (c *Client) PutMetricsEnabled(ctx context.Context, enabled bool) error {
-	var reqBody struct {
-		Enabled bool `json:"enabled"`
-	}
+func (c *Client) UpdateMetricsEnabled(ctx context.Context, enabled bool) error {
+	var reqBody types.MetricsEnabled
 	reqBody.Enabled = enabled
 
 	reqBodyBytes, _ := json.Marshal(&reqBody)
@@ -171,25 +204,21 @@ func (c *Client) PutMetricsEnabled(ctx context.Context, enabled bool) error {
 		Body:    reqBodyBytes,
 	}
 
-	c.logRequest(ctx, "PutMetricsEnabled", req)
+	c.logRequest(ctx, "UpdateMetricsEnabled", req)
 
 	resp, err := c.doer.Do(ctx, req)
 	if err != nil {
 		return err
 	}
 
-	errInvalidRequest := func() *ClientError {
-		return &ClientError{
-			Code:    400,
-			Message: fmt.Sprintf("Invalid request: %s.", string(reqBodyBytes)),
-		}
-	}
-
 	switch resp.StatusCode {
 	case http.StatusNoContent:
 		return nil
 	case http.StatusBadRequest:
-		return errInvalidRequest()
+		return &ClientError{
+			Code:    http.StatusBadRequest,
+			Message: fmt.Sprintf("Invalid request: %s.", string(reqBodyBytes)),
+		}
 	default:
 		return errUnexpected(resp.StatusCode, resp.Body)
 	}
