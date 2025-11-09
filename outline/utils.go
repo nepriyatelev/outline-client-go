@@ -1,8 +1,8 @@
 package outline
 
 import (
+	"encoding/json"
 	"fmt"
-	"net/url"
 	"strings"
 	"time"
 )
@@ -42,7 +42,46 @@ func formatDuration(d time.Duration) string {
 	return "0s"
 }
 
-func setIDInPath(basePath *url.URL, id uint64) {
-    replacedPath := strings.Replace(basePath.Path, "{id}", fmt.Sprint(id), 1)
-    basePath.Path = replacedPath
+func setIDInPath(path string, id string) string {
+	replacedPath := strings.Replace(path, "{id}", id, 1)
+	return replacedPath
+}
+
+// unmarshalJSONWithError декодирует JSON структуру и возвращает указатель
+// Используйте для одиночных структур
+func unmarshalJSONWithError[T any](data []byte) (*T, error) {
+	target := new(T)
+	if err := unmarshalWithErrorInternal(data, target, fmt.Sprintf("%T", target)); err != nil {
+		return nil, err
+	}
+	return target, nil
+}
+
+// unmarshalJSONSliceOfPointersWithError для слайса указателей → []*T
+func unmarshalJSONSliceOfPointersWithError[T any](data []byte) ([]*T, error) {
+	var target []*T
+	if err := unmarshalWithErrorInternal(data, &target, fmt.Sprintf("%T", target)); err != nil {
+		return nil, err
+	}
+	return target, nil
+}
+
+// unmarshalWithErrorInternal общая логика для всех unmarshal операций
+func unmarshalWithErrorInternal(data []byte, target interface{}, typeStr string) error {
+	if len(data) == 0 {
+		return &UnmarshalError{
+			Data: data,
+			Type: typeStr,
+			Err:  fmt.Errorf("empty body"),
+		}
+	}
+
+	if err := json.Unmarshal(data, target); err != nil {
+		return &UnmarshalError{
+			Data: data,
+			Type: typeStr,
+			Err:  err,
+		}
+	}
+	return nil
 }
