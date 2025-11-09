@@ -8,47 +8,52 @@ import (
 	"github.com/nepriyatelev/outline-client-go/internal/logger"
 )
 
-var errParseBaseURL = func(baseURL string, err error) *ParseURLError {
-	return &ParseURLError{
-		BaseURL: baseURL,
-		Err:     err,
-	}
-}
-
 type Client struct {
 	secret string
 
 	// Server endpoints
-	getServerInfoPath     *url.URL
+	//
+	// Get Server Information
+	getServerInfoPath *url.URL
+
+	// Server Configuration
 	putServerHostnamePath *url.URL
+	putServerPortPath     *url.URL
 	putServerNamePath     *url.URL
 	getMetricsEnabledPath *url.URL
 	putMetricsEnabledPath *url.URL
-	
-	// Access keys endpoints
-	putServerPortPath         *url.URL
-	putServerDataLimitPath    *url.URL
-	deleteServerDataLimitPath *url.URL
-	postAccessKeyPath         *url.URL
-	getAccessKeysPath         *url.URL
-	putAccessKeyPath          *url.URL
-	getAccessKeyPath          *url.URL
-	deleteAccessKeyPath       *url.URL
-	putAccessKeyNamePath      *url.URL
-	getMetricsTransferPath    *url.URL
 
-	// Experimental endpoints
-	getExperimentalMetricsPath *url.URL
-
-	// Limit endpoints
+	// Data Limits (Server-wide)
 	putServerAccessKeyDataLimitPath    *url.URL
 	deleteServerAccessKeyDataLimitPath *url.URL
-	putAccessKeyDataLimitPath          *url.URL
-	deleteAccessKeyDataLimitPath       *url.URL
+
+	// Access keys endpoints
+	//
+	// CRUD Operations
+	postAccessKeyPath   *url.URL
+	getAccessKeysPath   *url.URL
+	getAccessKeyPath    *url.URL
+	putAccessKeyPath    *url.URL
+	deleteAccessKeyPath *url.URL
+
+	// Access Key Management
+	putAccessKeyNamePath         *url.URL
+	putAccessKeyDataLimitPath    *url.URL
+	deleteAccessKeyDataLimitPath *url.URL
+
+	// Metrics Endpoints
+	//
+	// Transfer Metrics
+	getMetricsTransferPath *url.URL
+
+	// Experimental Endpoints
+	//
+	// Experimental Metrics
+	getExperimentalMetricsPath *url.URL
 
 	// Internal
-	doer                   contracts.Doer
-	logger                 contracts.Logger
+	doer   contracts.Doer
+	logger contracts.Logger
 }
 
 func NewClient(baseURL, secret string, options ...Option) (*Client, error) {
@@ -79,66 +84,75 @@ func initClient(baseURL, secret string, options ...Option) (*Client, error) {
 	}
 
 	var (
-	// Server endpoints
-	getServerInfoPath     = "/server"
-	putServerHostnamePath = "/server/hostname-for-access-keys"
-	putServerNamePath     = "/name"
-	getMetricsEnabledPath = "/metrics/enabled"
-	putMetricsEnabledPath = "/metrics/enabled"
+		// Server endpoints
+		//
+		// Get Server Information
+		getServerInfoPath = "/server"
 
-	// Access keys endpoints
-	putServerPortPath         = "/server/port-for-new-access-keys"
-	putServerDataLimitPath    = "/server/access-key-data-limit"
-	deleteServerDataLimitPath = "/server/access-key-data-limit"
-	postAccessKeyPath         = "/access-keys"
-	getAccessKeysPath         = "/access-keys"
-	putAccessKeyPath          = "/access-keys/{id}"
-	getAccessKeyPath          = "/access-keys/{id}"
-	deleteAccessKeyPath       = "/access-keys/{id}"
-	putAccessKeyNamePath      = "/access-keys/{id}/name"
-	getMetricsTransferPath    = "/metrics/transfer"
+		// Server Configuration
+		putServerHostnamePath = "/server/hostname-for-access-keys"
+		putServerPortPath     = "/server/port-for-new-access-keys"
+		putServerNamePath     = "/name"
+		getMetricsEnabledPath = "/metrics/enabled"
+		putMetricsEnabledPath = "/metrics/enabled"
 
-	// Experimental endpoints
-	getExperimentalMetricsPath = "/experimental/server/metrics"
+		// Data Limits (Server-wide)
+		putServerAccessKeyDataLimitPath    = "/server/access-key-data-limit"
+		deleteServerAccessKeyDataLimitPath = "/server/access-key-data-limit"
 
-	// Limit endpoints
-	putServerAccessKeyDataLimitPath    = "/server/access-key-data-limit"
-	deleteServerAccessKeyDataLimitPath = "/server/access-key-data-limit"
-	putAccessKeyDataLimitPath          = "/access-keys/{id}/data-limit"
-	deleteAccessKeyDataLimitPath       = "/access-keys/{id}/data-limit"
-)
+		// Access keys endpoints
+		//
+		// CRUD Operations
+		postAccessKeyPath   = "/access-keys"
+		getAccessKeysPath   = "/access-keys"
+		getAccessKeyPath    = "/access-keys/{id}"
+		putAccessKeyPath    = "/access-keys/{id}"
+		deleteAccessKeyPath = "/access-keys/{id}"
+
+		// Access Key Management
+		putAccessKeyNamePath         = "/access-keys/{id}/name"
+		putAccessKeyDataLimitPath    = "/access-keys/{id}/data-limit"
+		deleteAccessKeyDataLimitPath = "/access-keys/{id}/data-limit"
+
+		// Metrics Endpoints
+		//
+		// Transfer Metrics
+		getMetricsTransferPath = "/metrics/transfer"
+
+		// Experimental Endpoints
+		//
+		// Experimental Metrics
+		getExperimentalMetricsPath = "/experimental/server/metrics"
+	)
 
 	c := &Client{
 		secret: secret,
 
 		// Server endpoints
-		getServerInfoPath:     resolve(getServerInfoPath),            
-		putServerHostnamePath: resolve(putServerHostnamePath),
-		putServerNamePath:     resolve(putServerNamePath),    
-		getMetricsEnabledPath: resolve(getMetricsEnabledPath),
-		putMetricsEnabledPath: resolve(putMetricsEnabledPath),
-
-		// Access keys endpoints
-		putServerPortPath:         resolve(putServerPortPath),
-		putServerDataLimitPath:    resolve(putServerDataLimitPath),
-		deleteServerDataLimitPath: resolve(deleteServerDataLimitPath),
-		postAccessKeyPath:         resolve(postAccessKeyPath),
-		getAccessKeysPath:         resolve(getAccessKeysPath),
-		putAccessKeyPath:          resolve(putAccessKeyPath),
-		getAccessKeyPath:          resolve(getAccessKeyPath),
-		deleteAccessKeyPath:       resolve(deleteAccessKeyPath),
-		putAccessKeyNamePath:      resolve(putAccessKeyNamePath),
-		getMetricsTransferPath:    resolve(getMetricsTransferPath),
-
-		// Experimental endpoints
-		getExperimentalMetricsPath: resolve(getExperimentalMetricsPath),
-
-		// Limit endpoints
+		getServerInfoPath:                  resolve(getServerInfoPath),
+		putServerHostnamePath:              resolve(putServerHostnamePath),
+		putServerPortPath:                  resolve(putServerPortPath),
+		putServerNamePath:                  resolve(putServerNamePath),
+		getMetricsEnabledPath:              resolve(getMetricsEnabledPath),
+		putMetricsEnabledPath:              resolve(putMetricsEnabledPath),
 		putServerAccessKeyDataLimitPath:    resolve(putServerAccessKeyDataLimitPath),
 		deleteServerAccessKeyDataLimitPath: resolve(deleteServerAccessKeyDataLimitPath),
-		putAccessKeyDataLimitPath:		  resolve(putAccessKeyDataLimitPath),
-		deleteAccessKeyDataLimitPath:       resolve(deleteAccessKeyDataLimitPath),                    
 
+		// Access keys endpoints
+		postAccessKeyPath:            resolve(postAccessKeyPath),
+		getAccessKeysPath:            resolve(getAccessKeysPath),
+		getAccessKeyPath:             resolve(getAccessKeyPath),
+		putAccessKeyPath:             resolve(putAccessKeyPath),
+		deleteAccessKeyPath:          resolve(deleteAccessKeyPath),
+		putAccessKeyNamePath:         resolve(putAccessKeyNamePath),
+		putAccessKeyDataLimitPath:    resolve(putAccessKeyDataLimitPath),
+		deleteAccessKeyDataLimitPath: resolve(deleteAccessKeyDataLimitPath),
+
+		// Metrics Endpoints
+		getMetricsTransferPath: resolve(getMetricsTransferPath),
+
+		// Experimental Endpoints
+		getExperimentalMetricsPath: resolve(getExperimentalMetricsPath),
 
 		doer:   http.NewClient(),
 		logger: logger.NewNoopLogger(),
@@ -147,5 +161,6 @@ func initClient(baseURL, secret string, options ...Option) (*Client, error) {
 	for _, opt := range options {
 		opt(c)
 	}
+
 	return c, nil
 }
