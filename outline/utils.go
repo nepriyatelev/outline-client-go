@@ -12,7 +12,17 @@ func maskSecretPath(raw, secret string) string {
 		return raw
 	}
 
-	return strings.ReplaceAll(raw, "/"+secret+"/", "/*****/")
+	// Split by slash to get path segments
+	parts := strings.Split(raw, "/")
+
+	// Mask each segment that exactly matches the secret
+	for i, part := range parts {
+		if part == secret {
+			parts[i] = "*****"
+		}
+	}
+
+	return strings.Join(parts, "/")
 }
 
 func formatDuration(d time.Duration) string {
