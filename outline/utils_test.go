@@ -61,19 +61,19 @@ func TestMaskSecretPath(t *testing.T) {
 			name:     "Secret at the end without trailing slash",
 			raw:      "/api/data/secret123",
 			secret:   "secret123",
-			expected: "/api/data/secret123",
+			expected: "/api/data/*****",
 		},
 		{
 			name:     "Secret at the beginning without trailing slash",
 			raw:      "/secret123",
 			secret:   "secret123",
-			expected: "/secret123",
+			expected: "/*****",
 		},
 		{
 			name:     "Path with no slashes",
 			raw:      "secret123",
 			secret:   "secret123",
-			expected: "secret123",
+			expected: "*****",
 		},
 		{
 			name:     "Secret surrounded by multiple slashes",
