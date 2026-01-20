@@ -210,7 +210,7 @@ func (c *Client) UpdateDataLimitAccessKey(
 		Body:    reqBodyBytes,
 	}
 
-	c.logRequest(ctx, "SetDataLimitAccessKey", req)
+	c.logRequest(ctx, "UpdateDataLimitAccessKey", req)
 
 	resp, err := c.doer.Do(ctx, req)
 	if err != nil {
