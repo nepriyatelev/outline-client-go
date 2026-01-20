@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+# Minimal Conventional Commits check: type(scope?): description
+# Allowed types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+
+commit_msg_file="$1"
+
+if [ ! -f "$commit_msg_file" ]; then
+  echo "commit-msg hook: missing commit message file" >&2
+  exit 1
+fi
+
+# Regex: type, optional scope `(scope)`, optional !, colon, space, description (at least 1 char)
+pattern='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([^()]+\))?!?: .+'
+
+first_line=$(head -n1 "$commit_msg_file")
+
+if echo "$first_line" | grep -Eq "$pattern"; then
+  exit 0
+fi
+
+echo "\n✖ Conventional Commit check failed" >&2
+echo "First line must match: type(scope)?: description" >&2
+echo "Allowed types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert" >&2
+echo "Example: fix(api): handle nil pointer" >&2
+exit 1
