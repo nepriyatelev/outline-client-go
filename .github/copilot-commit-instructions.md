@@ -1,8 +1,35 @@
-# Commit Message Instructions
+# Commit Message Instructions for GitHub Copilot
 
-You MUST generate commit messages ONLY in English.
-Generate the commit message following the Conventional Commits specification.
-The commit message should be structured as follows:
+**Purpose**: Generate high-quality, idiomatic Conventional Commits that communicate intent clearly and enable automated tooling (changelog generation, semantic versioning, automated releases).
+
+## 🎯 Copilot Commit Generation Priorities
+
+**ALWAYS follow these in order:**
+
+1. **ALWAYS** write the message in English only
+2. **ALWAYS** use a valid Conventional Commit type
+3. **ALWAYS** use imperative mood (present tense) in description
+4. **ALWAYS** keep description concise (~50-72 characters)
+5. **ALWAYS** use lowercase for type and scope
+6. **PREFER** including a scope in parentheses (but omit if affects multiple components)
+7. **PREFER** including a body when context is helpful (what/why, not how)
+8. **INCLUDE** footers for references (Refs, Closes, Fixes) or BREAKING CHANGE details
+9. **USE** `!` or `BREAKING CHANGE:` footer if the commit breaks public APIs
+10. **AVOID** non-standard types unless your tooling explicitly supports them
+11. **AVOID** vague words like "update", "change", "stuff", "misc"
+12. **AVOID** Russian or mixed-language text
+13. **AVOID** scope if change affects entire project or multiple components
+14. **AVOID** periods at the end of description
+15. **AVOID** redundant information between description and body
+16. **AVOID** emojis or decorative characters in the subject line
+
+Note: Descriptions should start lowercase unless they contain proper nouns or widely-used abbreviations (e.g., JWT, HTTP, Go), which may remain uppercase.
+
+---
+
+## Commit Message Structure
+
+Every commit message follows this structure:
 
 ```
 <type>[optional scope]: <description>
@@ -12,111 +39,658 @@ The commit message should be structured as follows:
 [optional footer(s)]
 ```
 
-The commit contains the following structural elements, to communicate intent to the consumers of your library:
+### Subject Line (REQUIRED)
 
-**fix:** a commit of the *type* `fix` patches a bug in your codebase (this correlates with `PATCH` in Semantic Versioning).
+Format: `type(scope): description`
 
-**feat:** a commit of the *type* `feat` introduces a new feature to the codebase (this correlates with `MINOR` in Semantic Versioning).
+**Rules:**
+- **Type**: REQUIRED, must be one of the valid types
+- **Scope**: OPTIONAL, enclosed in parentheses
+- **Description**: REQUIRED, concise summary of changes
+- **Total length**: Should fit on one line (~50-72 characters)
+- **Case**: lowercase only
+- **Ending**: NO period at the end
+- **Mood**: MUST use imperative mood (present tense)
 
-**BREAKING CHANGE:** a commit that has a footer `BREAKING CHANGE:`, or appends a `!` after the type/scope, introduces a breaking API change (correlating with `MAJOR` in Semantic Versioning). A BREAKING CHANGE can be part of commits of any *type*.
+**Valid types:**
+- `feat` — new feature
+- `fix` — bug fix
+- `docs` — documentation changes
+- `style` — code formatting (no logic change)
+- `refactor` — code refactoring (no behavior change)
+- `perf` — performance improvement
+- `test` — test additions/modifications
+- `build` — build system/tooling changes
+- `ci` — CI/CD configuration changes
+- `chore` — dependency updates, version bumps
+- `revert` — reverts a previous commit
 
-*types* other than `fix:` and `feat:` are allowed, for example @commitlint/config-conventional (based on the Angular convention) recommends `build:`, `chore:`, `ci:`, `docs:`, `style:`, `refactor:`, `perf:`, `test:`, and others.
+---
 
-*footers* other than `BREAKING CHANGE: <description>` may be provided and follow a convention similar to git trailer format.
+## Imperative Mood (Present Tense) - CRITICAL
 
-Additional types are not mandated by the Conventional Commits specification, and have no implicit effect in Semantic Versioning (unless they include a BREAKING CHANGE).
+Description MUST use imperative mood, as if commanding someone to apply the commit:
 
-A scope may be provided to a commit's type, to provide additional contextual information and is contained within parenthesis, e.g., `feat(parser): add ability to parse arrays`.
-
-## Examples
-
-### Commit message with description and breaking change footer
-
+### ❌ WRONG (Past Tense)
 ```
-feat: allow provided config object to extend other configs
-
-BREAKING CHANGE: `extends` key in config file is now used for extending other config files
-```
-
-### Commit message with `!` to draw attention to breaking change
-
-```
-feat!: send an email to the customer when a product is shipped
-```
-
-### Commit message with scope and `!` to draw attention to breaking change
-
-```
-feat(api)!: send an email to the customer when a product is shipped
-```
-
-### Commit message with both `!` and BREAKING CHANGE footer
-
-```
-chore!: drop support for Node 6
-
-BREAKING CHANGE: use JavaScript features not available in Node 6.
+feat: added data limit support
+fix: fixed race condition
+refactor: refactored authentication logic
 ```
 
-### Commit message with no body
+### ✅ CORRECT (Imperative/Present)
+```
+feat: add data limit support
+fix: prevent race condition
+refactor: simplify authentication logic
+```
+
+**Common verbs (imperative):**
+- add, remove, delete
+- implement, create, initialize
+- fix, prevent, resolve, address
+- update, modify, change, adjust
+- optimize, improve, enhance
+- simplify, refactor, reorganize
+- support, enable, disable
+- document, clarify, explain
+- test, verify, validate
+
+---
+
+## Scope Guidelines
+
+### When to Use Scope
+
+Scope clarifies which part of the codebase is affected:
+
+```
+✅ feat(api): add JWT authentication
+✅ fix(parser): handle edge case in array parsing
+✅ docs(readme): add installation instructions
+✅ test(auth): add OAuth2 flow tests
+```
+
+### When to OMIT Scope
+
+Omit scope if the change affects:
+- Multiple components simultaneously
+- The entire project/codebase
+- General tooling or infrastructure
+- Multiple packages/modules
+
+```
+✅ fix: prevent race condition across all services
+✅ docs: update contributing guidelines
+✅ ci: update GitHub Actions workflow
+✅ chore: upgrade Go version to 1.21
+```
+
+### Scope Format Rules
+
+- **Single word** when possible: `feat(api)`; if necessary, hyphenate: `feat(http-client)`
+- **Lowercase only**: `feat(auth)` not `feat(Auth)` or `feat(AUTH)`
+- **Hyphenated** if needed: `feat(access-control)` not `feat(accessControl)`
+- **No slashes/paths**: `feat(http)` not `feat(src/http)` or `feat(core/http)`
+- **No generic names**: avoid `core`, `main`, `utils` — be specific
+- **One logical unit**: represent a single module or package
+
+### Common Scope Examples
+
+- **By layer**: api, cli, core, database, frontend, gateway
+- **By feature**: auth, payment, cache, logging, metrics, scheduler
+- **By module**: parser, tokenizer, serializer, validator, formatter
+- **By domain**: user, account, subscription, billing, notification
+- **Infrastructure**: build, ci, deps (dependencies), docker
+- **Documentation**: readme, docs, changelog, contributing
+
+---
+
+## Description Rules
+
+### Length and Format
+
+```
+feat(api): add JWT authentication with refresh tokens
+|--------| |--------------------------------------|
+   type                    description
+                       ~50-72 characters ideal
+```
+
+**Rules:**
+- Keep it short and specific (~50-72 characters)
+- Do NOT end with a period
+- Use imperative mood (command form)
+- Be specific, not vague
+
+### ❌ Bad Descriptions
+
+```
+❌ "update dependencies" (too vague)
+❌ "fix stuff" (unclear)
+❌ "add feature to support thing" (too generic)
+❌ "misc improvements" (meaningless)
+❌ "Add data limit support." (period, not imperative; starts with uppercase)
+❌ "added support for new API" (past tense)
+❌ "feat(api): add JWT authentication 🚀" (emoji not allowed)
+```
+
+### ✅ Good Descriptions
+
+```
+✅ "add JWT authentication with refresh tokens"
+✅ "fix nil pointer in retry logic"
+✅ "optimize database query performance by 40%"
+✅ "refactor authentication middleware"
+✅ "prevent session expiration on token refresh"
+✅ "support custom headers in HTTP client"
+```
+
+---
+
+## Body (Optional but Recommended)
+
+Use body when additional context is helpful.
+
+### When to Include Body
+
+- Change requires explanation beyond the description
+- Complex implementation details
+- Motivation for the change
+- Impact on other systems
+- Non-obvious consequences
+
+### Body Format Rules
+
+- **Separation**: Begin body one blank line after description
+- **Line length**: Wrap at 72 characters per line
+- **Structure**: Free-form paragraphs, can have multiple paragraphs
+- **Content**: Answer "what" and "why", not "how"
+- **Multiple paragraphs**: Separate with blank lines
+
+### ❌ Wrong Body Format
+
+```
+feat(api): add JWT authentication
+
+Add JWT token support.
+Implement refresh token rotation.
+Check token expiration.
+```
+
+### ✅ Correct Body Format
+
+```
+feat(api): add JWT authentication
+
+Introduce JWT token support to replace session-based auth.
+This enables stateless authentication across distributed services.
+
+Add support for token refresh to extend sessions without re-authentication.
+Implement automatic token rotation for improved security.
+
+Resolves performance issues with session store under high load.
+```
+
+### Body Best Practices
+
+- Explain the motivation (why this change was needed)
+- Explain the impact (what problem it solves)
+- Include relevant context for reviewers
+- Do NOT repeat the description
+- Do NOT include code snippets (put in commit comments)
+- Do NOT explain HOW the code works (use inline comments)
+
+---
+
+## Footers (Optional)
+
+Footers provide metadata and references. Format: `Token: value` or `Token #value`
+
+### Footer Format Rules
+
+- **Separation**: Begin footers one blank line after body (or description if no body)
+- **Format**: `Token: value` (colon and space) OR `Token #value` (space and hash)
+- **Tokens**: Use hyphens for spaces: `Reviewed-by`, `Co-authored-by`
+- **Case**: Tokens are case-insensitive but conventionally Title-Case
+- **Multiple**: Separate multiple footers with blank lines or list them consecutively
+
+### Common Footers
+
+| Footer | Format | Purpose | Example |
+|--------|--------|---------|---------|
+| `Refs` | `Refs: #123` | Reference issue | `Refs: #456` |
+| `Closes` | `Closes: #123` | Close issue on merge | `Closes: #789` |
+| `Fixes` | `Fixes: #123` | Fix issue on merge | `Fixes: #101` |
+| `Reviewed-by` | `Reviewed-by: @name` | Code reviewer | `Reviewed-by: @alice` |
+| `Co-authored-by` | `Co-authored-by: Name <email>` | Multiple authors | `Co-authored-by: Bob <bob@example.com>` |
+| `BREAKING CHANGE` | `BREAKING CHANGE: description` | Breaking API change | `BREAKING CHANGE: removed deprecated API` |
+
+Inline example using Fixes:
+
+```
+fix(parser): handle nil input safely
+
+Avoid panic when input is nil by adding guard clauses.
+
+Fixes: #101
+```
+
+---
+
+## BREAKING CHANGE - CRITICAL
+
+Breaking changes MUST be explicitly marked using either `!` notation or `BREAKING CHANGE:` footer.
+
+### When to Mark as BREAKING CHANGE
+
+- API signature changed (function/method removed or modified)
+- Return type changed
+- Behavior changed in incompatible way
+- Required migration for consumers
+- Removed deprecated feature
+
+### Method 1: Using `!` Notation (PREFERRED)
+
+Add `!` immediately before the colon:
+
+```
+feat(api)!: remove deprecated authentication endpoint
+
+The old /auth/login endpoint has been removed.
+Use /auth/signin endpoint instead.
+```
+
+```
+chore!: drop support for Go 1.18
+
+Go 1.18 is no longer supported. Upgrade to Go 1.19+.
+```
+
+### Method 2: Using `BREAKING CHANGE:` Footer
+
+```
+feat(types): rename MetricsEnabled to MetricsSettings
+
+BREAKING CHANGE: exported type was renamed; update imports and usage.
+```
+
+### Method 3: Using Both (Maximum Clarity)
+
+```
+feat(api)!: remove deprecated authentication endpoint
+
+The old /auth/login endpoint has been removed.
+Use /auth/signin endpoint instead.
+
+BREAKING CHANGE: /auth/login endpoint removed; migrate to /auth/signin
+```
+
+---
+
+## Semantic Versioning Mapping
+
+Commit types map to semantic versioning:
+
+| Commit Type | Version Bump | Trigger |
+|------------|-------------|---------|
+| `feat` | MINOR | New feature (+0.1.0) |
+| `fix` | PATCH | Bug fix (+0.0.1) |
+| `BREAKING CHANGE` (any type) | MAJOR | Breaking change (+1.0.0) |
+| `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `build`, `ci` | NONE | No version bump |
+
+**Examples:**
+- `feat: add new API` → 1.0.0 → 1.1.0
+- `fix: resolve bug` → 1.1.0 → 1.1.1
+- `feat!: change API` → 1.1.0 → 2.0.0 (BREAKING)
+
+---
+
+## Type-Specific Guidelines
+
+### `feat` — New Feature
+
+Used when adding NEW functionality that users can consume.
+
+```
+feat(api): add JWT authentication
+feat(cli): add --verbose flag
+feat(storage): support S3 backend
+```
+
+### `fix` — Bug Fix
+
+Used when fixing bugs, edge cases, or incorrect behavior.
+
+```
+fix(parser): handle edge case in array parsing
+fix(auth): prevent session expiration on refresh
+fix(http): avoid nil pointer in retry logic
+```
+
+### `docs` — Documentation
+
+Used for documentation changes (not code).
 
 ```
 docs: correct spelling of CHANGELOG
+docs(readme): add installation instructions
+docs(contributing): update contribution guidelines
 ```
 
-### Commit message with scope
+### `style` — Code Formatting
+
+Used for formatting, whitespace, semicolons (NO logic changes).
 
 ```
-feat(lang): add Polish language
+style: format code with gofmt
+style(parser): fix indentation
+style: remove trailing whitespace
 ```
 
-### Commit message with multi-paragraph body and multiple footers
+### `refactor` — Refactoring
+
+Used when refactoring code (NO behavior changes, NOT an optimization).
 
 ```
-fix: prevent racing of requests
-
-Introduce a request id and a reference to latest request. Dismiss
-incoming responses other than from latest request.
-
-Remove timeouts which were used to mitigate the racing issue but are
-obsolete now.
-
-Reviewed-by: Z
-Refs: #123
+refactor(auth): simplify token validation
+refactor(parser): reorganize functions
+refactor(database): extract query builder
 ```
 
-## Specification
+### `perf` — Performance
 
-The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119.
+Used when optimizing performance (measurable improvement).
 
-1. Commits MUST be prefixed with a type, which consists of a noun, `feat`, `fix`, etc., followed by the OPTIONAL scope, OPTIONAL `!`, and REQUIRED terminal colon and space.
+```
+perf(sorting): optimize comparison function
+perf(cache): add in-memory caching layer
+perf(database): add indexes to frequently queried columns
+```
 
-2. The type `feat` MUST be used when a commit adds a new feature to your application or library.
+### `test` — Tests
 
-3. The type `fix` MUST be used when a commit represents a bug fix for your application.
+Used for test additions, modifications, or deletions.
 
-4. A scope MAY be provided after a type. A scope MUST consist of a noun describing a section of the codebase surrounded by parenthesis, e.g., `fix(parser):`
+```
+test(auth): add OAuth2 flow tests
+test: increase coverage to 90%
+test(api): add edge case tests for pagination
+```
 
-5. A description MUST immediately follow the colon and space after the type/scope prefix. The description is a short summary of the code changes, e.g., *fix: array parsing issue when multiple spaces were contained in string*.
+### `build` — Build System
 
-6. A longer commit body MAY be provided after the short description, providing additional contextual information about the code changes. The body MUST begin one blank line after the description.
+Used for build system, build tools, or build configuration changes.
 
-7. A commit body is free-form and MAY consist of any number of newline separated paragraphs.
+```
+build: add Go module dependencies
+build: configure Docker multi-stage build
+build: update build script for new targets
+```
 
-8. One or more footers MAY be provided one blank line after the body. Each footer MUST consist of a word token, followed by either a `: ` or ` #` separator, followed by a string value (this is inspired by the git trailer convention).
+### `ci` — CI/CD
 
-9. A footer's token MUST use `-` in place of whitespace characters, e.g., `Acked-by` (this helps differentiate the footer section from a multi-paragraph body). An exception is made for `BREAKING CHANGE`, which MAY also be used as a token.
+Used for CI/CD pipeline, workflow, or configuration changes.
 
-10. A footer's value MAY contain spaces and newlines, and parsing MUST terminate when the next valid footer token/separator pair is observed.
+```
+ci: update GitHub Actions to node 18
+ci(gitlab): add security scanning job
+ci: parallelize test execution
+```
 
-11. Breaking changes MUST be indicated in the type/scope prefix of a commit, or as an entry in the footer.
+### `chore` — Maintenance
 
-12. If included as a footer, a breaking change MUST consist of the uppercase text BREAKING CHANGE, followed by a colon, space, and description, e.g., *BREAKING CHANGE: environment variables now take precedence over config files*.
+Used for dependency updates, version bumps, or maintenance tasks (no feature or fix).
 
-13. If included in the type/scope prefix, breaking changes MUST be indicated by a `!` immediately before the `:`. If `!` is used, `BREAKING CHANGE:` MAY be omitted from the footer section, and the commit description SHALL be used to describe the breaking change.
+```
+chore: upgrade dependencies
+chore: bump Go version to 1.21
+chore: update copyright year
+```
 
-14. Types other than `feat` and `fix` MAY be used in your commit messages, e.g., *docs: update ref docs.*
+### `revert` — Revert Previous Commit
 
-15. The units of information that make up Conventional Commits MUST NOT be treated as case sensitive by implementors, with the exception of BREAKING CHANGE which MUST be uppercase.
+Used when reverting a previous commit.
 
-16. BREAKING-CHANGE MUST be synonymous with BREAKING CHANGE, when used as a token in a footer.
+```
+revert: add data limit support
+
+This reverts commit abc123.
+
+Refs: #789
+```
+
+---
+
+## ❌ Common Mistakes to Avoid
+
+### Mistake 1: Missing Type or Wrong Format
+
+```
+❌ "update metrics"
+❌ "Update metrics"
+❌ ": add metrics"
+✅ "feat(metrics): add counter support"
+```
+
+### Mistake 2: Description Not Imperative
+
+```
+❌ "added JWT authentication"
+❌ "adding token refresh"
+❌ "will add authentication"
+✅ "add JWT authentication"
+✅ "implement token refresh"
+```
+
+### Mistake 3: Non-English Text
+
+```
+❌ "исправление бага в парсере"
+❌ "fix(парсер): handle edge case"
+✅ "fix(parser): handle edge case"
+```
+
+### Mistake 4: Wrong Type Selection
+
+```
+❌ "improve: add caching" (not a valid type)
+❌ "perf: refactor code" (refactor is not perf)
+✅ "perf: add caching layer"
+✅ "refactor: simplify code"
+```
+
+### Mistake 5: Scope Too Long or Nested
+
+```
+❌ "feat(core/client/http): add timeout"
+❌ "feat(authentication_and_authorization): add OAuth"
+✅ "feat(http): add timeout configuration"
+✅ "feat(auth): add OAuth2 support"
+```
+
+### Mistake 6: Scope Too Generic
+
+```
+❌ "feat(core): add feature"
+❌ "fix(utils): fix issue"
+✅ "feat(api): add pagination"
+✅ "fix(parser): handle null values"
+```
+
+### Mistake 7: Blank Line Separation Missing
+
+```
+❌ "feat: add feature
+Add JWT authentication support.
+
+Refs: #123"
+
+✅ "feat: add JWT authentication
+
+Add support for stateless authentication.
+
+Refs: #123"
+```
+
+### Mistake 8: BREAKING CHANGE Not Marked
+
+```
+❌ "feat(api): remove deprecated endpoint"
+   (No ! or BREAKING CHANGE marker)
+
+✅ "feat(api)!: remove deprecated endpoint"
+
+OR
+
+✅ "feat(api): remove deprecated endpoint
+
+BREAKING CHANGE: /auth/login endpoint removed"
+```
+
+### Mistake 9: Description with Period
+
+```
+❌ "feat: add JWT authentication."
+✅ "feat: add JWT authentication"
+```
+
+### Mistake 10: Vague Words
+
+```
+❌ "fix: update stuff"
+❌ "feat: misc improvements"
+❌ "chore: change things"
+✅ "fix: prevent nil pointer in parser"
+✅ "feat: add data validation"
+✅ "chore: upgrade dependencies"
+```
+
+---
+
+## 📋 Quick Checklist (Pre-Commit)
+
+Before committing, verify:
+
+- [ ] **English only** — no Russian or mixed languages
+- [ ] **Valid type** — one of: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+- [ ] **Optional scope** — short, relevant, omitted if affects multiple components
+- [ ] **Imperative mood** — "add" not "added", "fix" not "fixed"
+- [ ] **Concise description** — ~50-72 characters, no period at end
+- [ ] **Body present if helpful** — after blank line, answers "why" and "what"
+- [ ] **Footers correct** — after blank line, proper format (Token: value)
+- [ ] **BREAKING CHANGE marked** — via `!` or footer if applicable
+- [ ] **References included** — Refs/Closes for related issues
+- [ ] **No vague words** — "update", "stuff", "misc" avoided
+- [ ] **Matches specification** — follows Conventional Commits exactly
+
+---
+
+## 📚 Example Messages by Scenario
+
+### Simple Fix
+
+```
+fix: prevent race condition in metrics
+```
+
+### Feature with Scope
+
+```
+feat(api): add pagination with offset and limit
+```
+
+### Detailed Feature
+
+```
+feat(cache): implement Redis client with connection pooling
+
+Add Redis support to improve performance for frequently accessed data.
+Implement automatic connection pooling with configurable pool size.
+Support both string and JSON data serialization.
+
+Refs: #234
+Closes: #222
+```
+
+### Breaking Change with `!`
+
+```
+feat(api)!: remove deprecated authentication endpoint
+
+Users must migrate from /auth/login to /auth/signin.
+```
+
+### Breaking Change with Footer
+
+```
+feat(types): rename UserRole to AccountRole
+
+BREAKING CHANGE: exported type was renamed; update imports and usage.
+```
+
+### Multiple Footers
+
+```
+fix: prevent nil pointer in retry logic
+
+Add nil-checks around transport and context on retry path.
+
+Reviewed-by: @alice
+Co-authored-by: Bob <bob@example.com>
+Refs: #456
+Closes: #455
+```
+
+### Documentation
+
+```
+docs: explain cache invalidation strategy
+```
+
+### Refactoring
+
+```
+refactor(auth): extract token validation into separate function
+```
+
+### Performance
+
+```
+perf(database): add index to user_id column
+```
+
+### Test Addition
+
+```
+test(auth): add edge case tests for expired tokens
+```
+
+### Dependency Update
+
+```
+chore: upgrade Go from 1.20 to 1.21
+```
+
+### Revert
+
+```
+revert: add data limit support
+
+This reverts commit abc123def456.
+
+Refs: #999
+```
+
+---
+
+## 🔗 Useful Resources
+
+- [Conventional Commits Official](https://www.conventionalcommits.org/)
+- [Semantic Versioning](https://semver.org/)
+- [Git Commit Best Practices](https://git-scm.com/book/en/v2/Git-Basics-Viewing-the-Commit-History)
+
+---
+
+**Last Updated**: January 2026  
+**Specification**: Conventional Commits v1.0.0
