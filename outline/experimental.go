@@ -2,7 +2,6 @@ package outline
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 
@@ -35,10 +34,5 @@ func (c *Client) GetExperimentalMetrics(ctx context.Context, since time.Duration
 		return nil, err
 	}
 
-	var experimentalMetrics *types.ExperimentalMetricsResponse
-	if err = json.Unmarshal(resp.Body, experimentalMetrics); err != nil {
-		return nil, err
-	}
-
-	return experimentalMetrics, nil
+	return unmarshalJSONWithError[types.ExperimentalMetricsResponse](resp.Body)
 }
