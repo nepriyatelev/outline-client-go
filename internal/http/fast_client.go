@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"slices"
 
 	"github.com/nepriyatelev/outline-client-go/internal/contracts"
 	"github.com/valyala/fasthttp"
@@ -9,6 +10,19 @@ import (
 
 const defaultUserAgentName = "outline-go-client/1.0" // User-Agent header
 
+// Client is a fasthttp-based HTTP client that implements the contracts.Doer interface.
+//
+// Memory Usage Considerations:
+// The client uses fasthttp's pooled Request/Response objects for efficiency.
+// However, since pooled responses are released immediately after the Do() call completes,
+// the response body MUST be copied out of the pool before returning. This means:
+//   - Each response body is fully cloned into new memory allocation
+//   - Large response bodies may cause significant memory usage
+//   - The response body remains in memory until the caller is done with it
+//
+// For typical Outline API responses (JSON metadata, access keys, metrics), this is not
+// a concern as responses are typically small (<100KB). If you expect large responses,
+// consider implementing streaming or chunked processing.
 type Client struct {
 	client *fasthttp.Client
 }
@@ -68,11 +82,25 @@ func (c *Client) Do(ctx context.Context, req *contracts.Request) (*contracts.Res
 		return true // продолжаем итерацию
 	})
 
+	// IMPORTANT: Body cloning is required here because fasthttp uses pooled Response objects.
+	// The fastResp will be released back to the pool via defer, so we MUST copy the body bytes
+	// out of the pooled response before it's released. This ensures the returned Response
+	// contains valid data after this function returns.
+	//
+	// Memory implications:
+	// - The entire response body is allocated in new memory via slices.Clone()
+	// - For large responses, this creates a full copy in heap memory
+	// - The copied body persists until the caller releases the contracts.Response
+	//
+	// This is the correct behavior for fasthttp pooling, but callers should be aware
+	// that holding onto Response objects will retain the full body in memory.
 	bodyBytes := fastResp.Body()
+	cloneBodyBytes := slices.Clone(bodyBytes)
+
 	resp := &contracts.Response{
 		StatusCode: fastResp.StatusCode(),
 		Headers:    headers,
-		Body:       bodyBytes,
+		Body:       cloneBodyBytes,
 	}
 	return resp, nil
 }
