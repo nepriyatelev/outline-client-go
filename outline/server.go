@@ -28,7 +28,12 @@ func (c *Client) GetServerInfo(ctx context.Context) (*types.ServerInfoResponse, 
 		return nil, err
 	}
 
-	return unmarshalJSONWithError[types.ServerInfoResponse](resp.Body)
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return unmarshalJSONWithError[types.ServerInfoResponse](resp.Body)
+	default:
+		return nil, errUnexpected(resp.StatusCode, resp.Body)
+	}
 }
 
 // === Server Configuration ===
@@ -177,7 +182,12 @@ func (c *Client) GetMetricsEnabled(ctx context.Context) (*types.MetricsEnabled, 
 		return nil, err
 	}
 
-	return unmarshalJSONWithError[types.MetricsEnabled](resp.Body)
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return unmarshalJSONWithError[types.MetricsEnabled](resp.Body)
+	default:
+		return nil, errUnexpected(resp.StatusCode, resp.Body)
+	}
 }
 
 // Enables or disables sharing of metrics.
