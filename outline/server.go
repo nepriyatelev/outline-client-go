@@ -28,12 +28,7 @@ func (c *Client) GetServerInfo(ctx context.Context) (*types.ServerInfoResponse, 
 		return nil, err
 	}
 
-	var serverInfo *types.ServerInfoResponse
-	if err = json.Unmarshal(resp.Body, serverInfo); err != nil {
-		return nil, err
-	}
-
-	return serverInfo, nil
+	return unmarshalJSONWithError[types.ServerInfoResponse](resp.Body)
 }
 
 // === Server Configuration ===
@@ -63,7 +58,7 @@ func (c *Client) UpdateServerHostname(ctx context.Context, hostnameOrIP string) 
 	}
 
 	switch resp.StatusCode {
-	case http.StatusCreated:
+	case http.StatusNoContent:
 		return nil
 	case http.StatusBadRequest:
 		return &ClientError{
@@ -146,7 +141,7 @@ func (c *Client) UpdateServerName(ctx context.Context, name string) error {
 		Body:    reqBodyBytes,
 	}
 
-	c.logRequest(ctx, "SetServerName", req)
+	c.logRequest(ctx, "UpdateServerName", req)
 
 	resp, err := c.doer.Do(ctx, req)
 	if err != nil {
