@@ -25,5 +25,10 @@ func (c *Client) GetMetricsTransfer(ctx context.Context) (*types.MetricsTransfer
 		return nil, err
 	}
 
-	return unmarshalJSONWithError[types.MetricsTransfer](resp.Body)
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return unmarshalJSONWithError[types.MetricsTransfer](resp.Body)
+	default:
+		return nil, errUnexpected(resp.StatusCode, resp.Body)
+	}
 }
