@@ -34,5 +34,10 @@ func (c *Client) GetExperimentalMetrics(ctx context.Context, since time.Duration
 		return nil, err
 	}
 
-	return unmarshalJSONWithError[types.ExperimentalMetricsResponse](resp.Body)
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return unmarshalJSONWithError[types.ExperimentalMetricsResponse](resp.Body)
+	default:
+		return nil, errUnexpected(resp.StatusCode, resp.Body)
+	}
 }
