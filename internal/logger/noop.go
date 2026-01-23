@@ -2,11 +2,11 @@ package logger
 
 import "context"
 
-type nopLogger struct{}
+type NopLogger struct{}
 
-func NewNoopLogger() *nopLogger {
-	return &nopLogger{}
+func NewNoopLogger() *NopLogger {
+	return &NopLogger{}
 }
 
-func (nopLogger) Debugf(_ context.Context, _ string, _ ...any) {}
-func (nopLogger) Infof(_ context.Context, _ string, _ ...any)  {}
+func (NopLogger) Debugf(_ context.Context, _ string, _ ...any) {}
+func (NopLogger) Infof(_ context.Context, _ string, _ ...any)  {}
