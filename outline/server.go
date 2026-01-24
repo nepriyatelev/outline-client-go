@@ -3,16 +3,18 @@ package outline
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/nepriyatelev/outline-client-go/internal/contracts"
 	"github.com/nepriyatelev/outline-client-go/outline/types"
 )
 
-// === Get Server Information ===
-
-// GetServerInfo Returns information about the server.
+// GetServerInfo retrieves information about the Outline server,
+// including name, version, and other metadata.
+//
+// It returns [*ClientError] for unexpected HTTP status codes,
+// [*UnmarshalError] if JSON parsing fails,
+// or [*DoError] if the HTTP request fails.
 func (c *Client) GetServerInfo(ctx context.Context) (*types.ServerInfoResponse, error) {
 	req := &contracts.Request{
 		Method:  http.MethodGet,
@@ -25,21 +27,24 @@ func (c *Client) GetServerInfo(ctx context.Context) (*types.ServerInfoResponse, 
 
 	resp, err := c.doer.Do(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, errDoGetServerInfo(err)
 	}
 
 	switch resp.StatusCode {
 	case http.StatusOK:
 		return unmarshalJSONWithError[types.ServerInfoResponse](resp.Body)
 	default:
-		return nil, errUnexpected(resp.StatusCode, resp.Body)
+		return nil, errUnexpectedStatusCode(resp.StatusCode, resp.Body)
 	}
 }
 
-// === Server Configuration ===
-
-// UpdateServerHostname Changes the hostname for access keys. Must be a valid hostname or IP address.
-// If it's a hostname, DNS must be set up independently of this API.
+// UpdateServerHostname changes the hostname or IP address for access keys.
+// The provided value must be a valid hostname or IP address.
+// If a hostname is provided, DNS must be configured independently.
+//
+// It returns [*ClientError] with code 400 if the hostname is invalid,
+// [*ClientError] with code 500 for internal server errors (e.g., network validation issues),
+// or [*DoError] if the HTTP request fails.
 func (c *Client) UpdateServerHostname(ctx context.Context, hostnameOrIP string) error {
 	var reqBody struct {
 		Hostname string `json:"hostname"`
@@ -59,33 +64,27 @@ func (c *Client) UpdateServerHostname(ctx context.Context, hostnameOrIP string) 
 
 	resp, err := c.doer.Do(ctx, req)
 	if err != nil {
-		return err
+		return errDoUpdateServerHostname(err)
 	}
 
 	switch resp.StatusCode {
 	case http.StatusNoContent:
 		return nil
 	case http.StatusBadRequest:
-		return &ClientError{
-			Code: http.StatusBadRequest,
-			Message: fmt.Sprintf("An invalid hostname or IP address was provided: %s.",
-				hostnameOrIP),
-		}
+		return errInvalidHostname(http.StatusBadRequest, hostnameOrIP)
 	case http.StatusInternalServerError:
-		return &ClientError{
-			Code: http.StatusInternalServerError,
-			Message: fmt.Sprintf("An internal error occurred for host or IP: %s. "+
-				"This could be thrown if there were network errors "+
-				"while validating the hostname.",
-				hostnameOrIP),
-		}
+		return errInternalHostname(http.StatusInternalServerError, hostnameOrIP)
 	default:
-		return errUnexpected(resp.StatusCode, resp.Body)
+		return errUnexpectedStatusCode(resp.StatusCode, resp.Body)
 	}
 }
 
-// UpdatePortNewAccessKeys Changes the default port for newly created access keys.
-// This can be a port already used for access keys.
+// UpdatePortNewAccessKeys changes the default port for newly created access keys.
+// The specified port can already be in use by existing access keys.
+//
+// It returns [*ClientError] with code 400 if the port is invalid,
+// [*ClientError] with code 409 if the port is already in use by another service,
+// or [*DoError] if the HTTP request fails.
 func (c *Client) UpdatePortNewAccessKeys(ctx context.Context, port uint16) error {
 	var reqBody struct {
 		Port uint16 `json:"port"`
@@ -105,32 +104,25 @@ func (c *Client) UpdatePortNewAccessKeys(ctx context.Context, port uint16) error
 
 	resp, err := c.doer.Do(ctx, req)
 	if err != nil {
-		return err
+		return errDoUpdatePortNewAccessKeys(err)
 	}
 
 	switch resp.StatusCode {
 	case http.StatusNoContent:
 		return nil
 	case http.StatusBadRequest:
-		return &ClientError{
-			Code: http.StatusBadRequest,
-			Message: fmt.Sprintf(
-				"The requested port wasn't an integer from 1 through 65535, "+
-					"or the request had no port parameter. Provided: %d.", port),
-		}
+		return errInvalidPort(http.StatusBadRequest, port)
 	case http.StatusConflict:
-		return &ClientError{
-			Code: http.StatusConflict,
-			Message: fmt.Sprintf(
-				"The requested port was already in use by another service: %d.",
-				port),
-		}
+		return errPortAlreadyInUse(http.StatusConflict, port)
 	default:
-		return errUnexpected(resp.StatusCode, resp.Body)
+		return errUnexpectedStatusCode(resp.StatusCode, resp.Body)
 	}
 }
 
-// UpdateServerName Renames the server.
+// UpdateServerName renames the server to the specified name.
+//
+// It returns [*ClientError] with code 400 if the name is invalid,
+// or [*DoError] if the HTTP request fails.
 func (c *Client) UpdateServerName(ctx context.Context, name string) error {
 	var reqBody struct {
 		Name string `json:"name"`
@@ -150,23 +142,24 @@ func (c *Client) UpdateServerName(ctx context.Context, name string) error {
 
 	resp, err := c.doer.Do(ctx, req)
 	if err != nil {
-		return err
+		return errDoUpdateServerName(err)
 	}
 
 	switch resp.StatusCode {
 	case http.StatusNoContent:
 		return nil
 	case http.StatusBadRequest:
-		return &ClientError{
-			Code:    http.StatusBadRequest,
-			Message: fmt.Sprintf("An invalid server name was provided: %s.", name),
-		}
+		return errInvalidServerName(http.StatusBadRequest, name)
 	default:
-		return errUnexpected(resp.StatusCode, resp.Body)
+		return errUnexpectedStatusCode(resp.StatusCode, resp.Body)
 	}
 }
 
-// GetMetricsEnabled Returns whether metrics is being shared.
+// GetMetricsEnabled retrieves the current metrics sharing status.
+//
+// It returns [*ClientError] for unexpected HTTP status codes,
+// [*UnmarshalError] if JSON parsing fails,
+// or [*DoError] if the HTTP request fails.
 func (c *Client) GetMetricsEnabled(ctx context.Context) (*types.MetricsEnabled, error) {
 	req := &contracts.Request{
 		Method:  http.MethodGet,
@@ -179,18 +172,21 @@ func (c *Client) GetMetricsEnabled(ctx context.Context) (*types.MetricsEnabled, 
 
 	resp, err := c.doer.Do(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, errDoGetMetricsEnabled(err)
 	}
 
 	switch resp.StatusCode {
 	case http.StatusOK:
 		return unmarshalJSONWithError[types.MetricsEnabled](resp.Body)
 	default:
-		return nil, errUnexpected(resp.StatusCode, resp.Body)
+		return nil, errUnexpectedStatusCode(resp.StatusCode, resp.Body)
 	}
 }
 
-// Enables or disables sharing of metrics.
+// UpdateMetricsEnabled enables or disables sharing of metrics.
+//
+// It returns [*ClientError] with code 400 if the request body is invalid,
+// or [*DoError] if the HTTP request fails.
 func (c *Client) UpdateMetricsEnabled(ctx context.Context, enabled bool) error {
 	var reqBody types.MetricsEnabled
 	reqBody.Enabled = enabled
@@ -208,24 +204,24 @@ func (c *Client) UpdateMetricsEnabled(ctx context.Context, enabled bool) error {
 
 	resp, err := c.doer.Do(ctx, req)
 	if err != nil {
-		return err
+		return errDoUpdateMetricsEnabled(err)
 	}
 
 	switch resp.StatusCode {
 	case http.StatusNoContent:
 		return nil
 	case http.StatusBadRequest:
-		return &ClientError{
-			Code:    http.StatusBadRequest,
-			Message: fmt.Sprintf("Invalid request: %s.", string(reqBodyBytes)),
-		}
+		return errInvalidRequest(http.StatusBadRequest, string(resp.Body))
 	default:
-		return errUnexpected(resp.StatusCode, resp.Body)
+		return errUnexpectedStatusCode(resp.StatusCode, resp.Body)
 	}
 }
 
-// === Data Limits (Server-wide) ===
-
+// UpdateKeyLimitBytes sets a server-wide data limit for newly created access keys.
+// This limit applies to all new access keys that will be created after this call.
+//
+// It returns [*ClientError] with code 400 if the data limit value is invalid,
+// or [*DoError] if the HTTP request fails.
 func (c *Client) UpdateKeyLimitBytes(ctx context.Context, bytes uint64) error {
 	var reqBody struct {
 		Limit types.Limit `json:"limit"`
@@ -245,22 +241,24 @@ func (c *Client) UpdateKeyLimitBytes(ctx context.Context, bytes uint64) error {
 
 	resp, err := c.doer.Do(ctx, req)
 	if err != nil {
-		return err
+		return errDoUpdateKeyLimitBytes(err)
 	}
 
 	switch resp.StatusCode {
 	case http.StatusNoContent:
 		return nil
 	case http.StatusBadRequest:
-		return &ClientError{
-			Code:    http.StatusBadRequest,
-			Message: fmt.Sprintf("Invalid data limit: %d.", bytes),
-		}
+		return errInvalidDataLimit(http.StatusBadRequest, bytes)
 	default:
-		return errUnexpected(resp.StatusCode, resp.Body)
+		return errUnexpectedStatusCode(resp.StatusCode, resp.Body)
 	}
 }
 
+// DeleteKeyLimitBytes removes the server-wide data limit for access keys.
+// After this call, newly created access keys will not have a data limit.
+//
+// It returns [*ClientError] for unexpected HTTP status codes,
+// or [*DoError] if the HTTP request fails.
 func (c *Client) DeleteKeyLimitBytes(ctx context.Context) error {
 	req := &contracts.Request{
 		Method:  http.MethodDelete,
@@ -273,13 +271,13 @@ func (c *Client) DeleteKeyLimitBytes(ctx context.Context) error {
 
 	resp, err := c.doer.Do(ctx, req)
 	if err != nil {
-		return err
+		return errDoDeleteKeyLimitBytes(err)
 	}
 
 	switch resp.StatusCode {
 	case http.StatusNoContent:
 		return nil
 	default:
-		return errUnexpected(resp.StatusCode, resp.Body)
+		return errUnexpectedStatusCode(resp.StatusCode, resp.Body)
 	}
 }

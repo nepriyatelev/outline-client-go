@@ -22,13 +22,13 @@ func (c *Client) GetMetricsTransfer(ctx context.Context) (*types.MetricsTransfer
 
 	resp, err := c.doer.Do(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, errDoGetMetricsTransfer(err)
 	}
 
 	switch resp.StatusCode {
 	case http.StatusOK:
 		return unmarshalJSONWithError[types.MetricsTransfer](resp.Body)
 	default:
-		return nil, errUnexpected(resp.StatusCode, resp.Body)
+		return nil, errUnexpectedStatusCode(resp.StatusCode, resp.Body)
 	}
 }
