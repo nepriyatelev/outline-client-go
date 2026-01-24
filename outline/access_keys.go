@@ -11,7 +11,12 @@ import (
 
 // === CRUD Operations for Access Keys ===
 
-// CreateAccessKey Creates a new access key on the server.
+// CreateAccessKey creates a new access key on the server with the provided configuration.
+// It returns the created access key or an error if the operation fails.
+//
+// It returns [*ClientError] for unexpected HTTP status codes,
+// [*UnmarshalError] if JSON parsing fails,
+// or [*DoError] if the HTTP request fails.
 func (c *Client) CreateAccessKey(ctx context.Context, createAccessKey *types.CreateAccessKey) (
 	*types.AccessKey, error,
 ) {
@@ -43,6 +48,12 @@ func (c *Client) CreateAccessKey(ctx context.Context, createAccessKey *types.Cre
 	}
 }
 
+// GetAccessKeys retrieves all access keys from the server.
+// It returns a slice of access keys or an error if the operation fails.
+//
+// It returns [*ClientError] for unexpected HTTP status codes,
+// [*UnmarshalError] if JSON parsing fails,
+// or [*DoError] if the HTTP request fails.
 func (c *Client) GetAccessKeys(ctx context.Context) ([]*types.AccessKey, error) {
 	req := &contracts.Request{
 		Method:  http.MethodGet,
@@ -65,6 +76,13 @@ func (c *Client) GetAccessKeys(ctx context.Context) ([]*types.AccessKey, error) 
 	}
 }
 
+// GetAccessKey retrieves a specific access key by its ID from the server.
+// It returns the access key or an error if not found or if the operation fails.
+//
+// It returns [*ClientError] with code 404 if the access key is not found,
+// [*ClientError] for other unexpected HTTP status codes,
+// [*UnmarshalError] if JSON parsing fails,
+// or [*DoError] if the HTTP request fails.
 func (c *Client) GetAccessKey(ctx context.Context, accessKeyID string) (*types.AccessKey, error) {
 	req := &contracts.Request{
 		Method:  http.MethodGet,
@@ -89,6 +107,13 @@ func (c *Client) GetAccessKey(ctx context.Context, accessKeyID string) (*types.A
 	}
 }
 
+// UpdateAccessKey updates an existing access key with the provided data.
+// It returns the updated access key or an error if not found or if the operation fails.
+//
+// It returns [*ClientError] with code 404 if the access key is not found,
+// [*ClientError] for other unexpected HTTP status codes,
+// [*UnmarshalError] if JSON parsing fails,
+// or [*DoError] if the HTTP request fails.
 func (c *Client) UpdateAccessKey(ctx context.Context, accessKeyID string,
 	updateAccessKey *types.AccessKey,
 ) (*types.AccessKey, error) {
@@ -122,6 +147,12 @@ func (c *Client) UpdateAccessKey(ctx context.Context, accessKeyID string,
 	}
 }
 
+// DeleteAccessKey deletes an access key by its ID from the server.
+// It returns an error if the access key is not found or if the operation fails.
+//
+// It returns [*ClientError] with code 404 if the access key is not found,
+// [*ClientError] for other unexpected HTTP status codes,
+// or [*DoError] if the HTTP request fails.
 func (c *Client) DeleteAccessKey(ctx context.Context, accessKeyID string) error {
 	req := &contracts.Request{
 		Method:  http.MethodDelete,
@@ -180,6 +211,13 @@ func (c *Client) UpdateNameAccessKey(ctx context.Context, accessKeyID, newName s
 	}
 }
 
+// UpdateDataLimitAccessKey sets a data transfer limit for an access key.
+// It returns an error if the access key is not found, the limit is invalid, or if the operation fails.
+//
+// It returns [*ClientError] with code 400 if the data limit is invalid,
+// [*ClientError] with code 404 if the access key is not found,
+// [*ClientError] for other unexpected HTTP status codes,
+// or [*DoError] if the HTTP request fails.
 func (c *Client) UpdateDataLimitAccessKey(
 	ctx context.Context, accessKeyID string, bytes uint64,
 ) error {
@@ -216,6 +254,12 @@ func (c *Client) UpdateDataLimitAccessKey(
 	}
 }
 
+// DeleteDataLimitAccessKey removes the data transfer limit for an access key.
+// It returns an error if the access key is not found or if the operation fails.
+//
+// It returns [*ClientError] with code 404 if the access key is not found,
+// [*ClientError] for other unexpected HTTP status codes,
+// or [*DoError] if the HTTP request fails.
 func (c *Client) DeleteDataLimitAccessKey(ctx context.Context, accessKeyID string) error {
 	req := &contracts.Request{
 		Method:  http.MethodDelete,
