@@ -2,42 +2,42 @@ package types
 
 import "slices"
 
-// Encryption methods (поддерживаемые Outline Server алгоритмы шифрования)
-// Outline использует AEAD шифры (Authenticated Encryption with Associated Data)
-// для обеспечения конфиденциальности, целостности и аутентичности данных
+// EncryptionMethods defines the supported encryption algorithms for Outline Server.
+// Outline uses AEAD ciphers (Authenticated Encryption with Associated Data)
+// to ensure confidentiality, integrity, and authenticity of data.
 const (
-	// MethodAES128GCM - AES-128 с аутентификацией (основной рекомендуемый)
-	// Обязательный метод в современных реализациях Shadowsocks
-	// Отличная производительность с аппаратным ускорением на современном оборудовании
+	// MethodAES128GCM is AES-128 with authentication (primary recommended).
+	// Required method in modern Shadowsocks implementations.
+	// Excellent performance with hardware acceleration on modern equipment.
 	MethodAES128GCM = "aes-128-gcm"
 
-	// MethodAES256GCM - AES-256 с аутентификацией (повышенная безопасность)
-	// Максимальный уровень защиты, рекомендуется для критичных данных
-	// Работает эффективнее при наличии аппаратного ускорения AES (AES-NI)
+	// MethodAES256GCM is AES-256 with authentication (enhanced security).
+	// Maximum level of protection, recommended for critical data.
+	// Works more efficiently with hardware AES acceleration (AES-NI).
 	MethodAES256GCM = "aes-256-gcm"
 
-	// MethodChaCha20IETFPoly1305 - ChaCha20 с аутентификацией (универсальный)
-	// Обязательный метод согласно спецификации Shadowsocks (SIP004)
-	// Лучший выбор для систем без аппаратного ускорения AES
-	// Используется как метод по умолчанию в Outline Server
+	// MethodChaCha20IETFPoly1305 is ChaCha20 with authentication (universal).
+	// Required method according to Shadowsocks specification (SIP004).
+	// Best choice for systems without hardware AES acceleration.
+	// Used as the default method in Outline Server.
 	MethodChaCha20IETFPoly1305 = "chacha20-ietf-poly1305"
 )
 
-// ValidEncryptionMethods возвращает список всех поддерживаемых методов шифрования
-// в порядке рекомендации (от более предпочтительного к менее предпочтительному)
+// ValidEncryptionMethods lists all supported encryption methods
+// in order of recommendation (from most preferred to least preferred).
 var ValidEncryptionMethods = []string{
-	MethodChaCha20IETFPoly1305, // Default в Outline Server
-	MethodAES128GCM,            // Рекомендуемый для современного оборудования
-	MethodAES256GCM,            // Для требующих максимальной безопасности
+	MethodChaCha20IETFPoly1305, // Default in Outline Server
+	MethodAES128GCM,            // Recommended for modern equipment
+	MethodAES256GCM,            // For those requiring maximum security
 }
 
-// IsValidEncryptionMethod проверяет, поддерживается ли переданный метод шифрования
-// Возвращает true если метод есть в списке поддерживаемых методов
+// IsValidEncryptionMethod reports whether the given encryption method is supported.
+// It returns true if the method is in the list of supported methods.
 func IsValidEncryptionMethod(method string) bool {
 	return slices.Contains(ValidEncryptionMethods, method)
 }
 
-// GetDefaultEncryptionMethod возвращает метод шифрования по умолчанию в Outline Server
+// GetDefaultEncryptionMethod returns the default encryption method used in Outline Server.
 func GetDefaultEncryptionMethod() string {
 	return MethodChaCha20IETFPoly1305
 }
