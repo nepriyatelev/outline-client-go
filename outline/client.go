@@ -64,7 +64,7 @@ type Client struct {
 // NewClient creates a [Client] that targets baseURL with the provided secret
 // and applies the supplied options.
 //
-// It returns [*ClientURLError] if the baseURL cannot be parsed or joined with the secret.
+// It returns [*ParseURLError] if the baseURL cannot be parsed or joined with the secret.
 func NewClient(baseURL, secret string, options ...Option) (*Client, error) {
 	return initClient(baseURL, secret, options...)
 }
