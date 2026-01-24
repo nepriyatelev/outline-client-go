@@ -6,11 +6,11 @@ import (
 	"github.com/nepriyatelev/outline-client-go/internal/contracts"
 )
 
-// logRequest формирует и отправляет два сообщения: Info и Debug.
-// methodName — имя вызываемой клиентской функции, например "GetExperimentalMetrics".
-// req — конечный HTTP запрос.
+// logRequest formats and sends two messages: Info and Debug.
+// methodName — the name of the calling client function, e.g. "GetExperimentalMetrics".
+// req — the final HTTP request.
 func (c *Client) logRequest(ctx context.Context, methodName string, req *contracts.Request) {
-	// Скрываем секрет в Info-логе
+	// Mask the secret in the Info log
 	maskedURL := maskSecretPath(req.URL, c.secret)
 	c.logger.Infof(
 		ctx,
@@ -20,7 +20,7 @@ func (c *Client) logRequest(ctx context.Context, methodName string, req *contrac
 		maskedURL,
 		req.Headers,
 	)
-	// В debug-логе показываем полный URL
+	// In the debug log, show the full URL
 	c.logger.Debugf(
 		ctx,
 		"%s: sending request: method=%s url=%s headers=%v",
