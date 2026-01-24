@@ -3,7 +3,6 @@ package outline
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/nepriyatelev/outline-client-go/internal/contracts"
@@ -33,14 +32,14 @@ func (c *Client) CreateAccessKey(ctx context.Context, createAccessKey *types.Cre
 
 	resp, err := c.doer.Do(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, errDoCreateAccessKey(err)
 	}
 
 	switch resp.StatusCode {
 	case http.StatusCreated:
 		return unmarshalJSONWithError[types.AccessKey](resp.Body)
 	default:
-		return nil, errUnexpected(resp.StatusCode, resp.Body)
+		return nil, errUnexpectedStatusCode(resp.StatusCode, resp.Body)
 	}
 }
 
@@ -55,14 +54,14 @@ func (c *Client) GetAccessKeys(ctx context.Context) ([]*types.AccessKey, error) 
 
 	resp, err := c.doer.Do(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, errDoGetAccessKeys(err)
 	}
 
 	switch resp.StatusCode {
 	case http.StatusOK:
 		return unmarshalJSONSliceOfPointersWithError[types.AccessKey](resp.Body)
 	default:
-		return nil, errUnexpected(resp.StatusCode, resp.Body)
+		return nil, errUnexpectedStatusCode(resp.StatusCode, resp.Body)
 	}
 }
 
@@ -77,19 +76,16 @@ func (c *Client) GetAccessKey(ctx context.Context, accessKeyID string) (*types.A
 
 	resp, err := c.doer.Do(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, errDoGetAccessKey(err)
 	}
 
 	switch resp.StatusCode {
 	case http.StatusOK:
 		return unmarshalJSONWithError[types.AccessKey](resp.Body)
 	case http.StatusNotFound:
-		return nil, &ClientError{
-			Code:    http.StatusNotFound,
-			Message: fmt.Sprintf("Access key with ID %s not found.", accessKeyID),
-		}
+		return nil, errAccessKeyNotFound(http.StatusNotFound, accessKeyID)
 	default:
-		return nil, errUnexpected(resp.StatusCode, resp.Body)
+		return nil, errUnexpectedStatusCode(resp.StatusCode, resp.Body)
 	}
 }
 
@@ -113,19 +109,16 @@ func (c *Client) UpdateAccessKey(ctx context.Context, accessKeyID string,
 
 	resp, err := c.doer.Do(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, errDoUpdateAccessKey(err)
 	}
 
 	switch resp.StatusCode {
 	case http.StatusCreated:
 		return unmarshalJSONWithError[types.AccessKey](resp.Body)
 	case http.StatusNotFound:
-		return nil, &ClientError{
-			Code:    http.StatusNotFound,
-			Message: fmt.Sprintf("Access key with ID %s not found.", accessKeyID),
-		}
+		return nil, errAccessKeyNotFound(http.StatusNotFound, accessKeyID)
 	default:
-		return nil, errUnexpected(resp.StatusCode, resp.Body)
+		return nil, errUnexpectedStatusCode(resp.StatusCode, resp.Body)
 	}
 }
 
@@ -140,19 +133,16 @@ func (c *Client) DeleteAccessKey(ctx context.Context, accessKeyID string) error 
 
 	resp, err := c.doer.Do(ctx, req)
 	if err != nil {
-		return err
+		return errDoDeleteAccessKey(err)
 	}
 
 	switch resp.StatusCode {
 	case http.StatusNoContent:
 		return nil
 	case http.StatusNotFound:
-		return &ClientError{
-			Code:    http.StatusNotFound,
-			Message: fmt.Sprintf("Access key with ID %s not found.", accessKeyID),
-		}
+		return errAccessKeyNotFound(http.StatusNotFound, accessKeyID)
 	default:
-		return errUnexpected(resp.StatusCode, resp.Body)
+		return errUnexpectedStatusCode(resp.StatusCode, resp.Body)
 	}
 }
 
@@ -177,19 +167,16 @@ func (c *Client) UpdateNameAccessKey(ctx context.Context, accessKeyID, newName s
 
 	resp, err := c.doer.Do(ctx, req)
 	if err != nil {
-		return err
+		return errDoUpdateNameAccessKey(err)
 	}
 
 	switch resp.StatusCode {
 	case http.StatusNoContent:
 		return nil
 	case http.StatusNotFound:
-		return &ClientError{
-			Code:    http.StatusNotFound,
-			Message: fmt.Sprintf("Access key with ID %s not found.", accessKeyID),
-		}
+		return errAccessKeyNotFound(http.StatusNotFound, accessKeyID)
 	default:
-		return errUnexpected(resp.StatusCode, resp.Body)
+		return errUnexpectedStatusCode(resp.StatusCode, resp.Body)
 	}
 }
 
@@ -214,25 +201,18 @@ func (c *Client) UpdateDataLimitAccessKey(
 
 	resp, err := c.doer.Do(ctx, req)
 	if err != nil {
-		return err
+		return errDoUpdateDataLimitAccessKey(err)
 	}
 
 	switch resp.StatusCode {
 	case http.StatusNoContent:
 		return nil
 	case http.StatusBadRequest:
-		return &ClientError{
-			Code: http.StatusBadRequest,
-			Message: fmt.Sprintf(
-				"The provided data limit is invalid: %d.", bytes),
-		}
+		return errInvalidDataLimit(http.StatusBadRequest, bytes)
 	case http.StatusNotFound:
-		return &ClientError{
-			Code:    http.StatusNotFound,
-			Message: fmt.Sprintf("Access key with ID %s not found.", accessKeyID),
-		}
+		return errAccessKeyNotFound(http.StatusNotFound, accessKeyID)
 	default:
-		return errUnexpected(resp.StatusCode, resp.Body)
+		return errUnexpectedStatusCode(resp.StatusCode, resp.Body)
 	}
 }
 
@@ -247,18 +227,15 @@ func (c *Client) DeleteDataLimitAccessKey(ctx context.Context, accessKeyID strin
 
 	resp, err := c.doer.Do(ctx, req)
 	if err != nil {
-		return err
+		return errDoDeleteDataLimitAccessKey(err)
 	}
 
 	switch resp.StatusCode {
 	case http.StatusNoContent:
 		return nil
 	case http.StatusNotFound:
-		return &ClientError{
-			Code:    http.StatusNotFound,
-			Message: fmt.Sprintf("Access key with ID %s not found.", accessKeyID),
-		}
+		return errAccessKeyNotFound(http.StatusNotFound, accessKeyID)
 	default:
-		return errUnexpected(resp.StatusCode, resp.Body)
+		return errUnexpectedStatusCode(resp.StatusCode, resp.Body)
 	}
 }
