@@ -1,6 +1,7 @@
 package outline
 
 import (
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -122,82 +123,114 @@ func TestMaskSecretPath(t *testing.T) {
 func TestSetIDInPath(t *testing.T) {
 	tests := []struct {
 		name     string
-		path     string
+		urlStr   string
 		id       string
 		expected string
 	}{
 		{
 			name:     "Replace {id} in middle",
-			path:     "/api/{id}/data",
+			urlStr:   "/api/{id}/data",
 			id:       "123",
 			expected: "/api/123/data",
 		},
 		{
 			name:     "No {id} in path",
-			path:     "/api/data",
+			urlStr:   "/api/data",
 			id:       "123",
 			expected: "/api/data",
 		},
 		{
 			name:     "Multiple {id}, replace only first",
-			path:     "/{id}/foo/{id}/bar",
+			urlStr:   "/{id}/foo/{id}/bar",
 			id:       "123",
-			expected: "/123/foo/{id}/bar",
+			expected: "/123/foo/%7Bid%7D/bar",
 		},
 		{
 			name:     "{id} at start",
-			path:     "{id}/data",
+			urlStr:   "{id}/data",
 			id:       "123",
 			expected: "123/data",
 		},
 		{
 			name:     "{id} at end",
-			path:     "/api/{id}",
+			urlStr:   "/api/{id}",
 			id:       "123",
 			expected: "/api/123",
 		},
 		{
 			name:     "Empty path",
-			path:     "",
+			urlStr:   "",
 			id:       "123",
 			expected: "",
 		},
 		{
 			name:     "Empty id",
-			path:     "/api/{id}",
+			urlStr:   "/api/{id}",
 			id:       "",
 			expected: "/api/",
 		},
 		{
 			name:     "ID with special characters",
-			path:     "/api/{id}",
+			urlStr:   "/api/{id}",
 			id:       "a/b?c=d&e=f",
-			expected: "/api/a/b?c=d&e=f",
+			expected: "/api/a/b%3Fc=d&e=f",
 		},
 		{
 			name:     "No replacement needed",
-			path:     "no id here",
+			urlStr:   "no id here",
 			id:       "123",
-			expected: "no id here",
+			expected: "no%20id%20here",
 		},
 		{
 			name:     "{id} in word",
-			path:     "prefix{id}suffix",
+			urlStr:   "prefix{id}suffix",
 			id:       "123",
 			expected: "prefix123suffix",
 		},
 		{
 			name:     "ID with numbers",
-			path:     "/user/{id}/profile",
+			urlStr:   "/user/{id}/profile",
 			id:       "456",
 			expected: "/user/456/profile",
+		},
+		{
+			name:     "Full URL with {id}",
+			urlStr:   "http://localhost:8081/api/access-keys/{id}/data-limit",
+			id:       "key-123",
+			expected: "http://localhost:8081/api/access-keys/key-123/data-limit",
+		},
+		{
+			name:     "HTTPS URL with {id}",
+			urlStr:   "https://api.example.com/v1/resources/{id}",
+			id:       "resource-456",
+			expected: "https://api.example.com/v1/resources/resource-456",
+		},
+		{
+			name:     "URL with query parameters",
+			urlStr:   "http://example.com/api/{id}?param=value",
+			id:       "789",
+			expected: "http://example.com/api/789?param=value",
+		},
+		{
+			name:     "URL with port and {id}",
+			urlStr:   "http://localhost:3000/users/{id}/profile",
+			id:       "user-abc",
+			expected: "http://localhost:3000/users/user-abc/profile",
+		},
+		{
+			name:     "URL with multiple path segments and {id}",
+			urlStr:   "https://service.domain.com/api/v2/projects/{id}/issues",
+			id:       "proj-001",
+			expected: "https://service.domain.com/api/v2/projects/proj-001/issues",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := setIDInPath(tt.path, tt.id)
-			assert.Equal(t, tt.expected, result, "setIDInPath(%q, %q)", tt.path, tt.id)
+			u, err := url.Parse(tt.urlStr)
+			assert.NoError(t, err, "url.Parse should not fail for %q", tt.urlStr)
+			result := setIDInPath(*u, tt.id)
+			assert.Equal(t, tt.expected, result, "setIDInPath(%q, %q)", tt.urlStr, tt.id)
 		})
 	}
 }

@@ -102,9 +102,9 @@ func TestUnmarshalWithErrorInternal_TypeMismatch(t *testing.T) {
 	assert.ErrorIs(t, err, UnmarshalFailedError)
 }
 
-func TestUnmarshalJSONSliceOfPointersWithError_Success(t *testing.T) {
-	data := []byte(`[{"name":"Alice","age":30},{"name":"Bob","age":25}]`)
-	res, err := unmarshalJSONSliceOfPointersWithError[testPerson](data)
+func TestUnmarshalAccessKeysResponse_Success(t *testing.T) {
+	data := []byte(`{"accessKeys":[{"name":"Alice","age":30},{"name":"Bob","age":25}]}`)
+	res, err := unmarshalAccessKeysResponse[testPerson](data)
 	assert.NoError(t, err)
 	if assert.Len(t, res, 2) {
 		assert.Equal(t, "Alice", res[0].Name)
@@ -114,16 +114,22 @@ func TestUnmarshalJSONSliceOfPointersWithError_Success(t *testing.T) {
 	}
 }
 
-func TestUnmarshalJSONSliceOfPointersWithError_EmptySlice(t *testing.T) {
-	data := []byte(`[]`)
-	res, err := unmarshalJSONSliceOfPointersWithError[testPerson](data)
+func TestUnmarshalAccessKeysResponse_EmptyArray(t *testing.T) {
+	data := []byte(`{"accessKeys":[]}`)
+	res, err := unmarshalAccessKeysResponse[testPerson](data)
 	assert.NoError(t, err)
-	assert.NotNil(t, res)
 	assert.Len(t, res, 0)
 }
 
-func TestUnmarshalJSONSliceOfPointersWithError_EmptyData(t *testing.T) {
-	res, err := unmarshalJSONSliceOfPointersWithError[testPerson]([]byte{})
+func TestUnmarshalAccessKeysResponse_MissingField(t *testing.T) {
+	data := []byte(`{}`)
+	res, err := unmarshalAccessKeysResponse[testPerson](data)
+	assert.NoError(t, err)
+	assert.Nil(t, res)
+}
+
+func TestUnmarshalAccessKeysResponse_EmptyData(t *testing.T) {
+	res, err := unmarshalAccessKeysResponse[testPerson]([]byte{})
 	assert.Nil(t, res)
 	assert.Error(t, err)
 	var ue *UnmarshalError
@@ -133,21 +139,9 @@ func TestUnmarshalJSONSliceOfPointersWithError_EmptyData(t *testing.T) {
 	assert.ErrorIs(t, err, UnmarshalEmptyBodyError)
 }
 
-func TestUnmarshalJSONSliceOfPointersWithError_InvalidJSON(t *testing.T) {
-	data := []byte(`[{"name":"Alice","age":30},]`)
-	res, err := unmarshalJSONSliceOfPointersWithError[testPerson](data)
-	assert.Nil(t, res)
-	assert.Error(t, err)
-	var ue *UnmarshalError
-	assert.ErrorAs(t, err, &ue)
-	assert.ErrorIs(t, err, ClientOutlineError)
-	assert.ErrorIs(t, err, UnmarshalFailedError)
-}
-
-func TestUnmarshalJSONSliceOfPointersWithError_TypeMismatch(t *testing.T) {
-	// Not a slice
-	data := []byte(`{"name":"Alice","age":30}`)
-	res, err := unmarshalJSONSliceOfPointersWithError[testPerson](data)
+func TestUnmarshalAccessKeysResponse_InvalidJSON(t *testing.T) {
+	data := []byte(`{"accessKeys":[invalid}`)
+	res, err := unmarshalAccessKeysResponse[testPerson](data)
 	assert.Nil(t, res)
 	assert.Error(t, err)
 	var ue *UnmarshalError

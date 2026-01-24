@@ -6,7 +6,7 @@ import (
 	"github.com/nepriyatelev/outline-client-go/internal/contracts"
 )
 
-// Экспортируем типы из internal для пользователей
+// Exported types from internal for users
 type (
 	Request  = contracts.Request
 	Response = contracts.Response
@@ -14,9 +14,10 @@ type (
 	Logger   = contracts.Logger
 )
 
-// Option задаёт опцию настройки клиента.
+// Option is a function that configures a Client.
 type Option func(*Client)
 
+// WithClient sets the HTTP client for the Client.
 func WithClient(client Doer) Option {
 	return func(c *Client) {
 		if isNilInterface(client) {
@@ -26,7 +27,7 @@ func WithClient(client Doer) Option {
 	}
 }
 
-// WithLogger задаёт логгер для клиента.
+// WithLogger sets the logger for the Client.
 func WithLogger(logger Logger) Option {
 	return func(c *Client) {
 		if isNilInterface(logger) {
@@ -36,13 +37,13 @@ func WithLogger(logger Logger) Option {
 	}
 }
 
-// isNilInterface возвращает true, если iface равен nil
-// или содержит динамический нулевой указатель.
+// isNilInterface returns true if iface is nil
+// or contains a dynamic nil pointer.
 func isNilInterface(iface any) bool {
 	if iface == nil {
 		return true
 	}
 	v := reflect.ValueOf(iface)
-	// Если это указатель, интерфейс содержит nil-указатель
+	// If this is a pointer, the interface contains a nil pointer
 	return v.Kind() == reflect.Ptr && v.IsNil()
 }
