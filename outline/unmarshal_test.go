@@ -101,3 +101,51 @@ func TestUnmarshalWithErrorInternal_TypeMismatch(t *testing.T) {
 	assert.ErrorIs(t, err, ClientOutlineError)
 	assert.ErrorIs(t, err, UnmarshalFailedError)
 }
+
+func TestUnmarshalAccessKeysResponse_Success(t *testing.T) {
+	data := []byte(`{"accessKeys":[{"name":"Alice","age":30},{"name":"Bob","age":25}]}`)
+	res, err := unmarshalAccessKeysResponse[testPerson](data)
+	assert.NoError(t, err)
+	if assert.Len(t, res, 2) {
+		assert.Equal(t, "Alice", res[0].Name)
+		assert.Equal(t, 30, res[0].Age)
+		assert.Equal(t, "Bob", res[1].Name)
+		assert.Equal(t, 25, res[1].Age)
+	}
+}
+
+func TestUnmarshalAccessKeysResponse_EmptyArray(t *testing.T) {
+	data := []byte(`{"accessKeys":[]}`)
+	res, err := unmarshalAccessKeysResponse[testPerson](data)
+	assert.NoError(t, err)
+	assert.Len(t, res, 0)
+}
+
+func TestUnmarshalAccessKeysResponse_MissingField(t *testing.T) {
+	data := []byte(`{}`)
+	res, err := unmarshalAccessKeysResponse[testPerson](data)
+	assert.NoError(t, err)
+	assert.Nil(t, res)
+}
+
+func TestUnmarshalAccessKeysResponse_EmptyData(t *testing.T) {
+	res, err := unmarshalAccessKeysResponse[testPerson]([]byte{})
+	assert.Nil(t, res)
+	assert.Error(t, err)
+	var ue *UnmarshalError
+	assert.ErrorAs(t, err, &ue)
+	assert.ErrorIs(t, err, ClientOutlineError)
+	assert.ErrorIs(t, err, UnmarshalFailedError)
+	assert.ErrorIs(t, err, UnmarshalEmptyBodyError)
+}
+
+func TestUnmarshalAccessKeysResponse_InvalidJSON(t *testing.T) {
+	data := []byte(`{"accessKeys":[invalid}`)
+	res, err := unmarshalAccessKeysResponse[testPerson](data)
+	assert.Nil(t, res)
+	assert.Error(t, err)
+	var ue *UnmarshalError
+	assert.ErrorAs(t, err, &ue)
+	assert.ErrorIs(t, err, ClientOutlineError)
+	assert.ErrorIs(t, err, UnmarshalFailedError)
+}
