@@ -24,7 +24,7 @@ import (
 //   - nil - On success (HTTP 200 OK)
 //   - *ClientError - For unexpected HTTP status codes
 //   - *UnmarshalError - If JSON parsing fails
-//   - error - Other errors from the HTTP request execution
+//   - *DoError - For failures while executing the HTTP request
 func (c *Client) GetServerInfo(ctx context.Context) (*types.ServerInfoResponse, error) {
 	// Create an HTTP GET request to fetch server information
 	req := &contracts.Request{
@@ -71,7 +71,7 @@ func (c *Client) GetServerInfo(ctx context.Context) (*types.ServerInfoResponse, 
 //   - *ClientError with Code 500 - If an internal server error occurs,
 //     possibly due to network validation issues (HTTP 500 Internal Server Error)
 //   - *ClientError - For other unexpected HTTP status codes
-//   - error - Other errors from the HTTP request execution
+//   - *DoError - For failures while executing the HTTP request
 func (c *Client) UpdateServerHostname(ctx context.Context, hostnameOrIP string) error {
 	// Build the request body with the hostname
 	var reqBody struct {
@@ -131,7 +131,7 @@ func (c *Client) UpdateServerHostname(ctx context.Context, hostnameOrIP string) 
 //   - *ClientError with Code 409 - If the port is already in use by another
 //     service (HTTP 409 Conflict)
 //   - *ClientError - For other unexpected HTTP status codes
-//   - error - Other errors from the HTTP request execution
+//   - *DoError - For failures while executing the HTTP request
 func (c *Client) UpdatePortNewAccessKeys(ctx context.Context, port uint16) error {
 	// Build the request body with the port number
 	var reqBody struct {
@@ -188,7 +188,7 @@ func (c *Client) UpdatePortNewAccessKeys(ctx context.Context, port uint16) error
 //   - *ClientError with Code 400 - If the provided server name is invalid
 //     (HTTP 400 Bad Request)
 //   - *ClientError - For other unexpected HTTP status codes
-//   - error - Other errors from the HTTP request execution
+//   - *DoError - For failures while executing the HTTP request
 func (c *Client) UpdateServerName(ctx context.Context, name string) error {
 	// Build the request body with the new server name
 	var reqBody struct {
@@ -243,7 +243,7 @@ func (c *Client) UpdateServerName(ctx context.Context, name string) error {
 //   - nil - On success (HTTP 200 OK)
 //   - *ClientError - For unexpected HTTP status codes
 //   - *UnmarshalError - If JSON parsing fails
-//   - error - Other errors from the HTTP request execution
+//   - *DoError - For failures while executing the HTTP request
 func (c *Client) GetMetricsEnabled(ctx context.Context) (*types.MetricsEnabled, error) {
 	// Create an HTTP GET request to fetch metrics status
 	req := &contracts.Request{
@@ -288,7 +288,7 @@ func (c *Client) GetMetricsEnabled(ctx context.Context) (*types.MetricsEnabled, 
 //   - *ClientError with Code 400 - If the request body or parameters are
 //     invalid (HTTP 400 Bad Request)
 //   - *ClientError - For other unexpected HTTP status codes
-//   - error - Other errors from the HTTP request execution
+//   - *DoError - For failures while executing the HTTP request
 func (c *Client) UpdateMetricsEnabled(ctx context.Context, enabled bool) error {
 	// Build the request body with the metrics enabled status
 	var reqBody types.MetricsEnabled
@@ -341,7 +341,7 @@ func (c *Client) UpdateMetricsEnabled(ctx context.Context, enabled bool) error {
 //   - *ClientError with Code 400 - If the provided data limit value is invalid
 //     (HTTP 400 Bad Request)
 //   - *ClientError - For other unexpected HTTP status codes
-//   - error - Other errors from the HTTP request execution
+//   - *DoError - For failures while executing the HTTP request
 func (c *Client) UpdateKeyLimitBytes(ctx context.Context, bytes uint64) error {
 	// Build the request body with the data limit
 	var reqBody struct {
@@ -393,7 +393,7 @@ func (c *Client) UpdateKeyLimitBytes(ctx context.Context, bytes uint64) error {
 //   - error - One of the following:
 //   - nil - On successful deletion (HTTP 204 No Content)
 //   - *ClientError - For unexpected HTTP status codes
-//   - error - Other errors from the HTTP request execution
+//   - *DoError - For failures while executing the HTTP request
 func (c *Client) DeleteKeyLimitBytes(ctx context.Context) error {
 	// Create an HTTP DELETE request to remove the data limit
 	req := &contracts.Request{
