@@ -47,11 +47,11 @@ type ClientError struct {
 }
 
 func (e *ClientError) Error() string {
-	e.message = fmt.Sprintf("%s; status code: %d", e.message, e.statusCode)
+	msg := fmt.Sprintf("%s; status code: %d", e.message, e.statusCode)
 	if len(e.data) > 0 {
-		e.message = fmt.Sprintf("%s; data: %s", e.message, e.data)
+		msg = fmt.Sprintf("%s; data: %s", msg, e.data)
 	}
-	return withLastError(e.message, e.err)
+	return withLastError(msg, e.err)
 }
 
 func (e *ClientError) Unwrap() error {
@@ -156,12 +156,13 @@ type ParseURLError struct {
 }
 
 func (e *ParseURLError) Error() string {
+	var msg string
 	if e.baseURL == "" {
-		e.message = fmt.Sprintf("%s; baseUrl is empty", e.message)
+		msg = fmt.Sprintf("%s; baseUrl is empty", e.message)
 	} else {
-		e.message = fmt.Sprintf("%s; (base url: %s)", e.message, e.baseURL)
+		msg = fmt.Sprintf("%s; (base url: %s)", e.message, e.baseURL)
 	}
-	return withLastError(e.message, e.err)
+	return withLastError(msg, e.err)
 }
 
 func (e *ParseURLError) Unwrap() error {
@@ -184,13 +185,14 @@ type UnmarshalError struct {
 }
 
 func (e *UnmarshalError) Error() string {
+	msg := e.message
 	if e.typeStr != "" {
-		e.message = fmt.Sprintf("%s; (type: %s)", e.message, e.typeStr)
+		msg = fmt.Sprintf("%s; (type: %s)", msg, e.typeStr)
 	}
 	if len(e.data) > 0 {
-		e.message = fmt.Sprintf("%s; data: %s", e.message, string(e.data))
+		msg = fmt.Sprintf("%s; data: %s", msg, string(e.data))
 	}
-	return withLastError(e.message, e.err)
+	return withLastError(msg, e.err)
 }
 
 func (e *UnmarshalError) Unwrap() error {
@@ -224,8 +226,8 @@ type DoError struct {
 }
 
 func (e *DoError) Error() string {
-	e.message = fmt.Sprintf("%s; operation: %s", e.message, e.operation)
-	return withLastError(e.message, e.err)
+	msg := fmt.Sprintf("%s; operation: %s", e.message, e.operation)
+	return withLastError(msg, e.err)
 }
 
 func (e *DoError) Unwrap() error {
