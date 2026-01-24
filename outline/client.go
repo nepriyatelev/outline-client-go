@@ -1,3 +1,5 @@
+// Package outline provides a client for interacting with Outline server management endpoints,
+// including server configuration, access key lifecycle, metrics, and experimental APIs.
 package outline
 
 import (
@@ -8,6 +10,9 @@ import (
 	"github.com/nepriyatelev/outline-client-go/internal/logger"
 )
 
+// Client manages authenticated calls to the Outline server API.
+// Client is safe for concurrent use after successful construction and
+// its zero value is unusable; call [NewClient] or [MustNewClient] instead.
 type Client struct {
 	secret string
 
@@ -56,10 +61,14 @@ type Client struct {
 	logger contracts.Logger
 }
 
+// NewClient creates a Client that targets baseURL with the provided secret and
+// applies the supplied options before returning the instance.
+// It returns an error if the baseURL cannot be parsed or joined with the secret.
 func NewClient(baseURL, secret string, options ...Option) (*Client, error) {
 	return initClient(baseURL, secret, options...)
 }
 
+// MustNewClient behaves like [NewClient] but panics on configuration errors.
 func MustNewClient(baseURL, secret string, options ...Option) *Client {
 	c, err := initClient(baseURL, secret, options...)
 	if err != nil {
