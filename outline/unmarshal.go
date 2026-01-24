@@ -13,12 +13,14 @@ func unmarshalJSONWithError[T any](data []byte) (*T, error) {
 	return target, nil
 }
 
-func unmarshalJSONSliceOfPointersWithError[T any](data []byte) ([]*T, error) {
-	var target []*T
-	if err := unmarshalWithErrorInternal(data, &target, fmt.Sprintf("%T", target)); err != nil {
+func unmarshalAccessKeysResponse[T any](data []byte) ([]*T, error) {
+	var wrapper struct {
+		AccessKeys []*T `json:"accessKeys"`
+	}
+	if err := unmarshalWithErrorInternal(data, &wrapper, fmt.Sprintf("[]*%T", *new(T))); err != nil {
 		return nil, err
 	}
-	return target, nil
+	return wrapper.AccessKeys, nil
 }
 
 func unmarshalWithErrorInternal(data []byte, target any, typeStr string) error {
