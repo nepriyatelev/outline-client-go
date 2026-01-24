@@ -23,22 +23,51 @@ const (
 )
 
 var (
-	ClientOutlineError        = errors.New(clientOutlineErrStr)
-	InvalidBaseURLError       = errors.New(invalidBaseURLErrStr)
-	UnmarshalFailedError      = errors.New(unmarshalFailedErrStr)
-	UnmarshalEmptyBodyError   = errors.New(unmarshalEmptyBodyErrStr)
-	InvalidHostnameError      = errors.New(invalidHostnameErrStr)
-	InternalHostNameError     = errors.New(internalHostNameErrStr)
-	InvalidPortError          = errors.New(invalidPortErrStr)
-	PortAlreadyInUseError     = errors.New(portAlreadyInUseErrStr)
-	InvalidServerNameError    = errors.New(invalidServerNameErrStr)
-	InvalidRequestError       = errors.New(invalidRequestErrStr)
-	InvalidDataLimitError     = errors.New(invalidDataLimitErrStr)
-	AccessKeyNotFoundError    = errors.New(accessKeyNotFoundErrStr)
+	// ClientOutlineError is the base error for all client errors.
+	ClientOutlineError = errors.New(clientOutlineErrStr)
+
+	// InvalidBaseURLError indicates that the provided base URL is malformed or empty.
+	InvalidBaseURLError = errors.New(invalidBaseURLErrStr)
+
+	// UnmarshalFailedError indicates that JSON unmarshaling failed.
+	UnmarshalFailedError = errors.New(unmarshalFailedErrStr)
+
+	// UnmarshalEmptyBodyError indicates that the response body was empty when data was expected.
+	UnmarshalEmptyBodyError = errors.New(unmarshalEmptyBodyErrStr)
+
+	// InvalidHostnameError indicates that the provided hostname or IP address is invalid.
+	InvalidHostnameError = errors.New(invalidHostnameErrStr)
+
+	// InternalHostNameError indicates an internal server error during hostname validation.
+	InternalHostNameError = errors.New(internalHostNameErrStr)
+
+	// InvalidPortError indicates that the port number is outside the valid range 1-65535.
+	InvalidPortError = errors.New(invalidPortErrStr)
+
+	// PortAlreadyInUseError indicates that the requested port is already in use by another service.
+	PortAlreadyInUseError = errors.New(portAlreadyInUseErrStr)
+
+	// InvalidServerNameError indicates that the provided server name is invalid.
+	InvalidServerNameError = errors.New(invalidServerNameErrStr)
+
+	// InvalidRequestError indicates that the request parameters are invalid.
+	InvalidRequestError = errors.New(invalidRequestErrStr)
+
+	// InvalidDataLimitError indicates that the provided data limit value is invalid.
+	InvalidDataLimitError = errors.New(invalidDataLimitErrStr)
+
+	// AccessKeyNotFoundError indicates that the requested access key does not exist.
+	AccessKeyNotFoundError = errors.New(accessKeyNotFoundErrStr)
+
+	// UnexpectedStatusCodeError indicates that the server returned an unexpected HTTP status code.
 	UnexpectedStatusCodeError = errors.New(unexpectedStatusCodeErrStr)
-	DoOperationError          = errors.New(doOperationErrStr)
+
+	// DoOperationError indicates that the HTTP request execution failed.
+	DoOperationError = errors.New(doOperationErrStr)
 )
 
+// ClientError represents an error returned by the Outline server API.
+// It contains the HTTP status code, response body, and a descriptive message.
 type ClientError struct {
 	statusCode int
 	data       []byte
@@ -46,6 +75,7 @@ type ClientError struct {
 	err        error
 }
 
+// Error returns a formatted error message including status code and response data.
 func (e *ClientError) Error() string {
 	msg := fmt.Sprintf("%s; status code: %d", e.message, e.statusCode)
 	if len(e.data) > 0 {
@@ -54,6 +84,7 @@ func (e *ClientError) Error() string {
 	return withLastError(msg, e.err)
 }
 
+// Unwrap returns the underlying error for use with [errors.Is] and [errors.As].
 func (e *ClientError) Unwrap() error {
 	return e.err
 }
@@ -149,12 +180,15 @@ var (
 	}
 )
 
+// ParseURLError represents an error that occurs when parsing the base URL.
+// It wraps [InvalidBaseURLError] and contains the original URL that failed to parse.
 type ParseURLError struct {
 	baseURL string
 	message string
 	err     error
 }
 
+// Error returns a formatted error message including the problematic URL.
 func (e *ParseURLError) Error() string {
 	var msg string
 	if e.baseURL == "" {
@@ -165,6 +199,7 @@ func (e *ParseURLError) Error() string {
 	return withLastError(msg, e.err)
 }
 
+// Unwrap returns the underlying error for use with [errors.Is] and [errors.As].
 func (e *ParseURLError) Unwrap() error {
 	return e.err
 }
@@ -177,6 +212,8 @@ var errParseBaseURL = func(baseURL string, err error) *ParseURLError {
 	}
 }
 
+// UnmarshalError represents an error that occurs when unmarshaling JSON response data.
+// It wraps [UnmarshalFailedError] and contains the raw data that failed to unmarshal.
 type UnmarshalError struct {
 	data    []byte
 	typeStr string
@@ -184,6 +221,7 @@ type UnmarshalError struct {
 	err     error
 }
 
+// Error returns a formatted error message including the target type and raw data.
 func (e *UnmarshalError) Error() string {
 	msg := e.message
 	if e.typeStr != "" {
@@ -195,6 +233,7 @@ func (e *UnmarshalError) Error() string {
 	return withLastError(msg, e.err)
 }
 
+// Unwrap returns the underlying error for use with [errors.Is] and [errors.As].
 func (e *UnmarshalError) Unwrap() error {
 	return e.err
 }
@@ -219,17 +258,21 @@ var (
 	}
 )
 
+// DoError represents an error that occurs when executing an HTTP request.
+// It wraps [DoOperationError] and contains the operation name that failed.
 type DoError struct {
 	operation string
 	message   string
 	err       error
 }
 
+// Error returns a formatted error message including the operation name.
 func (e *DoError) Error() string {
 	msg := fmt.Sprintf("%s; operation: %s", e.message, e.operation)
 	return withLastError(msg, e.err)
 }
 
+// Unwrap returns the underlying error for use with [errors.Is] and [errors.As].
 func (e *DoError) Unwrap() error {
 	return e.err
 }
