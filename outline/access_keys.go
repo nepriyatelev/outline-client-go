@@ -59,7 +59,7 @@ func (c *Client) GetAccessKeys(ctx context.Context) ([]*types.AccessKey, error) 
 
 	switch resp.StatusCode {
 	case http.StatusOK:
-		return unmarshalJSONSliceOfPointersWithError[types.AccessKey](resp.Body)
+		return unmarshalAccessKeysResponse[types.AccessKey](resp.Body)
 	default:
 		return nil, errUnexpectedStatusCode(resp.StatusCode, resp.Body)
 	}
@@ -68,7 +68,7 @@ func (c *Client) GetAccessKeys(ctx context.Context) ([]*types.AccessKey, error) 
 func (c *Client) GetAccessKey(ctx context.Context, accessKeyID string) (*types.AccessKey, error) {
 	req := &contracts.Request{
 		Method:  http.MethodGet,
-		URL:     setIDInPath(c.getAccessKeyPath.String(), accessKeyID),
+		URL:     setIDInPath(*c.getAccessKeyPath, accessKeyID),
 		Headers: DefaultHeaders(),
 	}
 
@@ -100,7 +100,7 @@ func (c *Client) UpdateAccessKey(ctx context.Context, accessKeyID string,
 
 	req := &contracts.Request{
 		Method:  http.MethodPut,
-		URL:     setIDInPath(c.putAccessKeyPath.String(), accessKeyID),
+		URL:     setIDInPath(*c.putAccessKeyPath, accessKeyID),
 		Headers: DefaultHeaders(),
 		Body:    reqBodyBytes,
 	}
@@ -125,7 +125,7 @@ func (c *Client) UpdateAccessKey(ctx context.Context, accessKeyID string,
 func (c *Client) DeleteAccessKey(ctx context.Context, accessKeyID string) error {
 	req := &contracts.Request{
 		Method:  http.MethodDelete,
-		URL:     setIDInPath(c.deleteAccessKeyPath.String(), accessKeyID),
+		URL:     setIDInPath(*c.deleteAccessKeyPath, accessKeyID),
 		Headers: DefaultHeaders(),
 	}
 
@@ -158,7 +158,7 @@ func (c *Client) UpdateNameAccessKey(ctx context.Context, accessKeyID, newName s
 
 	req := &contracts.Request{
 		Method:  http.MethodPut,
-		URL:     setIDInPath(c.putAccessKeyNamePath.String(), accessKeyID),
+		URL:     setIDInPath(*c.putAccessKeyNamePath, accessKeyID),
 		Headers: DefaultHeaders(),
 		Body:    reqBodyBytes,
 	}
@@ -192,7 +192,7 @@ func (c *Client) UpdateDataLimitAccessKey(
 
 	req := &contracts.Request{
 		Method:  http.MethodPut,
-		URL:     setIDInPath(c.putAccessKeyDataLimitPath.String(), accessKeyID),
+		URL:     setIDInPath(*c.putAccessKeyDataLimitPath, accessKeyID),
 		Headers: DefaultHeaders(),
 		Body:    reqBodyBytes,
 	}
@@ -219,7 +219,7 @@ func (c *Client) UpdateDataLimitAccessKey(
 func (c *Client) DeleteDataLimitAccessKey(ctx context.Context, accessKeyID string) error {
 	req := &contracts.Request{
 		Method:  http.MethodDelete,
-		URL:     setIDInPath(c.deleteAccessKeyDataLimitPath.String(), accessKeyID),
+		URL:     setIDInPath(*c.deleteAccessKeyDataLimitPath, accessKeyID),
 		Headers: DefaultHeaders(),
 	}
 
