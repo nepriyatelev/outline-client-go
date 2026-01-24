@@ -30,3 +30,7 @@ go.work.sum
 # Editor/IDE
 .idea/
 .vscode/
+
+# OS-specific files
+.DS_Store
+
